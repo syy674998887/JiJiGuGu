@@ -1,0 +1,505 @@
+/* ========== CSS Variables — LoL Dark Theme ========== */
+:root {
+    --gold: #c8aa6e;
+    --gold-dim: rgba(200, 170, 110, 0.3);
+    --gold-bright: #f0d070;
+    --blue: #7a9ec2;
+    --green: #2ecc71;
+    --red: #e84545;
+    --orange: #ff9944;
+    --bg-deep: rgba(10, 15, 25, 0.92);
+    --bg-title: rgba(5, 10, 20, 0.95);
+    --bg-card: rgba(15, 22, 36, 0.6);
+    --bg-btn: rgba(30, 58, 95, 0.6);
+    --bg-btn-active: rgba(180, 70, 40, 0.5);
+    --bg-chat: rgba(44, 62, 80, 0.6);
+    --text-primary: #a09b8c;
+    --text-dim: #6b6558;
+    --font-main: 'Inter', 'Rajdhani', -apple-system, sans-serif;
+    --radius: 4px;
+}
+
+/* ========== Reset ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: transparent;
+    overflow: hidden;
+    font-family: var(--font-main);
+    font-size: 14px;
+    zoom: 1.25;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ========== App Container ========== */
+.app {
+    width: 400px;
+    background: var(--bg-deep);
+    border: 1px solid var(--gold-dim);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.app-content {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px 6px;
+    gap: 4px;
+    position: relative;
+}
+
+/* ========== Title Bar ========== */
+.title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 35px;
+    padding: 0 10px;
+    background: var(--bg-title);
+    border-bottom: 1px solid var(--gold-dim);
+    border-radius: 8px 8px 0 0;
+    -webkit-app-region: no-drag;
+}
+
+.title-bar-drag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    -webkit-app-region: drag;
+    height: 100%;
+}
+
+/* When locked, disable dragging */
+.title-bar-drag.no-drag {
+    -webkit-app-region: no-drag;
+}
+
+/* Locked visual indicator */
+.app.locked {
+    border-color: rgba(200, 170, 110, 0.15);
+}
+
+.title-logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    object-fit: cover;
+}
+
+.title-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.title-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    -webkit-app-region: no-drag;
+}
+
+.title-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: background 0.15s, color 0.15s;
+}
+
+.title-btn:hover {
+    background: rgba(200, 170, 110, 0.15);
+    color: var(--gold);
+}
+
+.lock-btn.active {
+    color: var(--gold);
+    background: rgba(200, 170, 110, 0.2);
+}
+
+.close-btn:hover {
+    background: rgba(232, 69, 69, 0.3);
+    color: var(--red);
+}
+
+/* ========== Status Bar ========== */
+.status-bar {
+    text-align: center;
+    padding: 4px;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-radius: var(--radius);
+}
+
+.status-bar.waiting {
+    background: none;
+    color: var(--gold);
+    animation: pulse-dim 2s infinite;
+}
+
+@keyframes pulse-dim {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ========== Timer Panel ========== */
+.timer-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* ========== Timer Row ========== */
+.timer-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 4px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    min-height: 36px;
+}
+
+.timer-row-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(30, 40, 60, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.champion-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-fallback {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 14px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.timer-row-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--gold);
+    width: 26px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.timer-row-spells {
+    display: flex;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ========== Spell Button ========== */
+.spell-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+    padding: 0 5px;
+    border: 1px solid rgba(100, 80, 50, 0.3);
+    border-radius: var(--radius);
+    background: var(--bg-btn);
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    transition: background 0.2s, border-color 0.2s;
+    -webkit-app-region: no-drag;
+}
+
+.spell-button:hover {
+    border-color: rgba(200, 170, 110, 0.5);
+}
+
+.spell-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: filter 0.2s;
+}
+
+.spell-cooldown .spell-icon {
+    filter: brightness(0.4);
+}
+
+.spell-info {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.spell-countdown {
+    color: var(--orange);
+    font-weight: 600;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.spell-comeback {
+    color: var(--blue);
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.spell-ready-check {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.spell-idle-text {
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+/* Spell states */
+.spell-cooldown {
+    background: var(--bg-btn-active);
+    border-color: rgba(180, 70, 40, 0.4);
+}
+
+.spell-ready {
+    border-color: var(--green);
+    animation: readyPulse 0.5s ease-in-out 3;
+}
+
+@keyframes readyPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    50% { box-shadow: 0 0 6px 2px rgba(46, 204, 113, 0.5); }
+}
+
+/* ========== Adjust Buttons ========== */
+.timer-row-adjusts {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;
+}
+
+.adjust-buttons {
+    display: flex;
+    gap: 1px;
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;
+}
+
+.adjust-btn {
+    background: rgba(50, 60, 80, 0.6);
+    border: 1px solid rgba(100, 80, 50, 0.2);
+    border-radius: 2px;
+    color: var(--text-dim);
+    font-size: 9px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    width: 22px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.adjust-btn:hover {
+    background: rgba(200, 170, 110, 0.2);
+    color: var(--gold);
+}
+
+/* ========== Copy All ========== */
+.copy-all-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    -webkit-app-region: no-drag;
+}
+
+.copy-all-btn {
+    background: rgba(200, 170, 110, 0.15);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--radius);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.copy-all-btn:hover {
+    background: rgba(200, 170, 110, 0.3);
+}
+
+.copy-all-preview {
+    color: var(--blue);
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+
+/* ========== Settings Panel ========== */
+.settings-panel {
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    right: 8px;
+    padding: 10px;
+    background: var(--bg-deep);
+    border: 1px solid var(--gold-dim);
+    border-radius: 6px;
+    z-index: 50;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.settings-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--gold);
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.settings-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.settings-hint {
+    font-size: 10px;
+    color: var(--text-dim);
+}
+
+.settings-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-input {
+    width: 48px;
+    height: 28px;
+    background: rgba(200, 170, 110, 0.1);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    color: var(--gold);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+}
+
+.settings-input:focus {
+    border-color: var(--gold);
+}
+
+.settings-unit {
+    font-size: 13px;
+    color: var(--text-dim);
+}
+
+.settings-tips {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(200, 170, 110, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.settings-tips-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    align-self: flex-start;
+}
+
+.settings-tips kbd {
+    background: rgba(200, 170, 110, 0.15);
+    color: var(--gold);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* ========== Scrollbar ========== */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(200, 170, 110, 0.3);
+    border-radius: 2px;
+}
