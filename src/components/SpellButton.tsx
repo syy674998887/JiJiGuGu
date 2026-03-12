@@ -1,10 +1,9 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback } from 'react'
 import type { Position, SpellSlot, SpellTimer } from '../types'
 import { useTimerStore } from '../store/timerStore'
 import { useTickingTimer } from '../hooks/useTickingTimer'
 import { SPELL_ICON_KEYS, getSpellIconUrl } from '../utils/icons'
 import { formatTime } from '../utils/spells'
-import { formatComebackTime } from '../utils/format'
 
 interface SpellButtonProps {
     position: Position
@@ -21,7 +20,6 @@ export default function SpellButton({
 
     const startTimer = useTimerStore((s) => s.startTimer)
     const resetTimer = useTimerStore((s) => s.resetTimer)
-    const [readyFlash, setReadyFlash] = useState(false)
 
     const now = Date.now()
     const remaining = spell.active
@@ -29,18 +27,6 @@ export default function SpellButton({
         : 0
 
     const isActive = spell.active && remaining > 0
-    const isReady = spell.active && remaining <= 0
-
-    useEffect(() => {
-        if (isReady) {
-            setReadyFlash(true)
-            const timeout = setTimeout(() => {
-                setReadyFlash(false)
-                resetTimer(position, slot)
-            }, 3000)
-            return () => clearTimeout(timeout)
-        }
-    }, [isReady, position, slot, resetTimer])
 
     const handleClick = useCallback(async () => {
         await startTimer(position, slot)
@@ -58,16 +44,13 @@ export default function SpellButton({
     const spellIconKey = SPELL_ICON_KEYS[spell.spellName] || ''
     const iconUrl = getSpellIconUrl(spellIconKey)
 
-    let stateClass = 'spell-idle'
-    if (isActive) stateClass = 'spell-cooldown'
-    if (readyFlash) stateClass = 'spell-ready'
+    const stateClass = isActive ? 'spell-cooldown' : 'spell-ready'
 
     return (
         <button
             className={`spell-button ${stateClass}`}
             onClick={handleClick}
             onContextMenu={handleContextMenu}
-            title={`${spell.spellName} — Left click: start timer, Right click: reset`}
         >
             {iconUrl && (
                 <img
@@ -81,21 +64,14 @@ export default function SpellButton({
                 />
             )}
             <div className="spell-info">
-                {isActive && (
-                    <>
-                        <span className="spell-countdown">
-                            {formatTime(remaining)}
-                        </span>
-                        {spell.comebackGameTime !== null && (
-                            <span className="spell-comeback">
-                                →{formatComebackTime(spell.comebackGameTime)}
-                            </span>
-                        )}
-                    </>
-                )}
-                {readyFlash && <span className="spell-ready-check">✓</span>}
-                {!isActive && !readyFlash && (
-                    <span className="spell-idle-text">--:--</span>
+                {isActive ? (
+                    <span className="spell-countdown">
+                        {formatTime(remaining)}
+                    </span>
+                ) : (
+                    <svg className="spell-ready-check" viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                 )}
             </div>
         </button>

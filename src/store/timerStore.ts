@@ -74,6 +74,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     isInGame: false,
     gameTime: null,
     reactionDelay: REACTION_COMPENSATION,
+    debug: false,
 
     startTimer: async (pos: Position, slot: SpellSlot): Promise<void> => {
         let gameTime: number | null = null
@@ -231,5 +232,9 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     setReactionDelay: (seconds: number) => {
         set({ reactionDelay: seconds })
+    },
+
+    setDebug: (on: boolean) => {
+        set({ debug: on })
     },
 }))

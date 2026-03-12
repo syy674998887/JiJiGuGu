@@ -38,7 +38,7 @@ body {
 
 /* ========== App Container ========== */
 .app {
-    width: 400px;
+    width: fit-content;
     background: var(--bg-deep);
     border: 1px solid var(--gold-dim);
     border-radius: 8px;
@@ -228,13 +228,12 @@ body {
     align-items: center;
     gap: 3px;
     height: 28px;
-    padding: 0 5px;
+    width: 60px;
+    padding: 0 4px;
     border: 1px solid rgba(100, 80, 50, 0.3);
     border-radius: var(--radius);
     background: var(--bg-btn);
     cursor: pointer;
-    flex: 1;
-    min-width: 0;
     transition: background 0.2s, border-color 0.2s;
     -webkit-app-region: no-drag;
 }
@@ -258,7 +257,8 @@ body {
 .spell-info {
     display: flex;
     align-items: center;
-    gap: 3px;
+    justify-content: center;
+    flex: 1;
     font-size: 11px;
     min-width: 0;
     overflow: hidden;
@@ -384,15 +384,10 @@ body {
 
 /* ========== Settings Panel ========== */
 .settings-panel {
-    position: absolute;
-    top: 4px;
-    left: 8px;
-    right: 8px;
     padding: 10px;
     background: var(--bg-deep);
     border: 1px solid var(--gold-dim);
     border-radius: 6px;
-    z-index: 50;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 

@@ -5,9 +5,10 @@ import { formatAllTimers } from '../utils/format'
 export default function CopyAllButton() {
     useTickingTimer()
     const enemies = useTimerStore((s) => s.enemies)
+    const debug = useTimerStore((s) => s.debug)
     const previewText = formatAllTimers(enemies)
 
-    if (!previewText) return null
+    if (!debug || !previewText) return null
 
     return (
         <div className="copy-all-section">

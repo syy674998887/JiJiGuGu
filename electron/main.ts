@@ -11,7 +11,11 @@ import {
 import https from 'node:https'
 import path from 'node:path'
 import Store from 'electron-store'
-import { sendInputText, isTabDown } from './sendInput'
+import dotenv from 'dotenv'
+import { sendInputText, isTabDown, isKeyDown } from './sendInput'
+import { setApiKey, fetchEnemyRuneHaste } from './riotApi'
+
+dotenv.config()
 
 const store = new Store({
     defaults: {
@@ -20,6 +24,9 @@ const store = new Store({
         screenLocked: false,
     },
 })
+
+// Initialize Riot API key from .env
+setApiKey(process.env.RIOT_API_KEY || '')
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -44,7 +51,7 @@ function createWindow() {
 
     mainWindow = new BrowserWindow({
         width: 500,
-        height: 780,
+        height: 100,
         ...(savedX !== null && savedY !== null ? { x: savedX, y: savedY } : {}),
         transparent: true,
         frame: false,
@@ -120,45 +127,11 @@ ipcMain.handle('get-active-player', async () => {
 })
 
 ipcMain.handle('get-all-game-data', async () => {
-    const data = await fetchLeagueAPI('/liveclientdata/allgamedata') as Record<string, unknown> | null
-    if (data && typeof data === 'object') {
-        const ap = data.activePlayer as Record<string, unknown> | undefined
-        const players = data.allPlayers as Array<Record<string, unknown>> | undefined
-        console.log('[LeagueAPI] activePlayer keys:', ap ? Object.keys(ap).join(',') : 'null')
-        console.log('[LeagueAPI] activePlayer.summonerName:', ap?.summonerName)
-        console.log('[LeagueAPI] activePlayer.riotId:', ap?.riotId)
-        console.log('[LeagueAPI] allPlayers count:', Array.isArray(players) ? players.length : 0)
-        if (players && players.length > 0) {
-            const p0 = players[0]
-            console.log('[LeagueAPI] player[0] keys:', Object.keys(p0).join(','))
-            console.log('[LeagueAPI] player[0] summonerName:', p0.summonerName, 'team:', p0.team, 'champion:', p0.championName)
-        }
-        const gd = data.gameData as Record<string, unknown> | undefined
-        console.log('[LeagueAPI] gameData:', gd ? JSON.stringify(gd).substring(0, 200) : 'null')
+    return fetchLeagueAPI('/liveclientdata/allgamedata')
+})
 
-        // Log team breakdown and spells
-        if (players && players.length > 0) {
-            const teams: Record<string, number> = {}
-            for (const p of players) {
-                const t = String(p.team || 'UNKNOWN')
-                teams[t] = (teams[t] || 0) + 1
-            }
-            console.log('[LeagueAPI] teams:', JSON.stringify(teams))
-
-            // Find enemy team (not same as activePlayer)
-            const myTeam = players.find((p: Record<string, unknown>) =>
-                p.summonerName === ap?.summonerName || p.riotId === ap?.riotId
-            )?.team
-            console.log('[LeagueAPI] myTeam:', myTeam)
-
-            const enemies = players.filter((p: Record<string, unknown>) => p.team !== myTeam)
-            console.log('[LeagueAPI] enemies count:', enemies.length)
-            for (const e of enemies) {
-                console.log(`[LeagueAPI] enemy: ${e.championName} position="${e.position}" team=${e.team}`)
-            }
-        }
-    }
-    return data
+ipcMain.handle('get-enemy-rune-haste', async (_event, activePlayerName: string, allPlayers: unknown[]) => {
+    return fetchEnemyRuneHaste(activePlayerName, allPlayers as Parameters<typeof fetchEnemyRuneHaste>[1])
 })
 
 ipcMain.on('save-position', (_event, pos: { x: number; y: number }) => {
@@ -185,7 +158,9 @@ ipcMain.handle('get-screen-lock', () => {
 
 ipcMain.on('set-window-size', (_event, width: number, height: number) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setResizable(true)
         mainWindow.setSize(width, height)
+        mainWindow.setResizable(false)
     }
 })
 
@@ -229,25 +204,15 @@ function fetchLeagueAPI(endpoint: string): Promise<unknown> {
                 res.on('data', (chunk: string) => (data += chunk))
                 res.on('end', () => {
                     try {
-                        const parsed = JSON.parse(data)
-                        console.log(`[LeagueAPI] ${endpoint} OK, keys:`,
-                            typeof parsed === 'object' && parsed !== null
-                                ? Object.keys(parsed).join(',')
-                                : typeof parsed)
-                        resolve(parsed)
+                        resolve(JSON.parse(data))
                     } catch {
-                        console.log(`[LeagueAPI] ${endpoint} parse error, raw:`, data.substring(0, 200))
                         resolve(null)
                     }
                 })
             },
         )
-        req.on('error', (err) => {
-            console.log(`[LeagueAPI] ${endpoint} error:`, err.message)
-            resolve(null)
-        })
+        req.on('error', () => resolve(null))
         req.on('timeout', () => {
-            console.log(`[LeagueAPI] ${endpoint} timeout`)
             req.destroy()
             resolve(null)
         })
@@ -256,37 +221,43 @@ function fetchLeagueAPI(endpoint: string): Promise<unknown> {
 
 // ---------- In-game features (Ctrl+V override + Tab hold overlay) ----------
 
-let ctrlVRegistered = false
 let tabPollTimer: NodeJS.Timeout | null = null
+let ctrlVPollTimer: NodeJS.Timeout | null = null
 let tabWasDown = false
+let vWasDown = false
 let isInGame = false
+
+const VK_CONTROL = 0x11
+const VK_V = 0x56
 
 function enableInGameFeatures() {
     if (isInGame) return
     isInGame = true
 
-    // Ctrl+V: intercept paste, type via SendInput
-    if (!ctrlVRegistered) {
-        globalShortcut.register('CommandOrControl+V', () => {
+    // Ctrl+V: poll for keypress, type via SendInput (polling bypasses game privilege restrictions)
+    vWasDown = false
+    ctrlVPollTimer = setInterval(() => {
+        const vDown = isKeyDown(VK_V)
+        if (isKeyDown(VK_CONTROL) && vDown && !vWasDown) {
             const text = clipboard.readText()
             if (text) sendInputText(text)
-        })
-        ctrlVRegistered = true
-    }
+        }
+        vWasDown = vDown
+    }, 50)
 
     // Tab hold: show overlay while held, hide on release
-    // Hide overlay by default when entering game
+    // Use opacity instead of hide/show to avoid Windows DWM flicker
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.hide()
+        mainWindow.setOpacity(0)
     }
     tabWasDown = false
     tabPollTimer = setInterval(() => {
         if (!mainWindow || mainWindow.isDestroyed()) return
         const tabDown = isTabDown()
         if (tabDown && !tabWasDown) {
-            mainWindow.showInactive()
+            mainWindow.setOpacity(1)
         } else if (!tabDown && tabWasDown) {
-            mainWindow.hide()
+            mainWindow.setOpacity(0)
         }
         tabWasDown = tabDown
     }, 50)
@@ -298,10 +269,10 @@ function disableInGameFeatures() {
     if (!isInGame) return
     isInGame = false
 
-    // Unregister Ctrl+V
-    if (ctrlVRegistered) {
-        globalShortcut.unregister('CommandOrControl+V')
-        ctrlVRegistered = false
+    // Stop Ctrl+V polling
+    if (ctrlVPollTimer) {
+        clearInterval(ctrlVPollTimer)
+        ctrlVPollTimer = null
     }
 
     // Stop Tab polling, show overlay normally
@@ -311,7 +282,7 @@ function disableInGameFeatures() {
     }
     tabWasDown = false
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.show()
+        mainWindow.setOpacity(1)
     }
 
     console.log('[InGame] Features disabled')

@@ -14926,6 +14926,8 @@ const Store = /* @__PURE__ */ getDefaultExportFromCjs(electronStore);
 const INPUT_KEYBOARD = 1;
 const KEYEVENTF_UNICODE = 4;
 const KEYEVENTF_KEYUP = 2;
+const VK_CONTROL$1 = 17;
+const MAPVK_VK_TO_VSC = 0;
 const user32 = koffi.load("user32.dll");
 const SendInput = user32.func("__stdcall", "SendInput", "uint", [
   "uint",
@@ -14935,6 +14937,7 @@ const SendInput = user32.func("__stdcall", "SendInput", "uint", [
   "int"
   // cbSize
 ]);
+const MapVirtualKeyW = user32.func("__stdcall", "MapVirtualKeyW", "uint", ["uint", "uint"]);
 const INPUT_SIZE = 40;
 function writeUnicodeInput(buf, offset, scanCode, keyUp) {
   buf.writeUInt32LE(INPUT_KEYBOARD, offset + 0);
@@ -14952,27 +14955,121 @@ function isKeyDown(vk) {
 function isTabDown() {
   return isKeyDown(VK_TAB);
 }
+function writeVirtualKeyInput(buf, offset, vk, keyUp) {
+  const scan = MapVirtualKeyW(vk, MAPVK_VK_TO_VSC);
+  buf.writeUInt32LE(INPUT_KEYBOARD, offset + 0);
+  buf.writeUInt16LE(vk, offset + 8);
+  buf.writeUInt16LE(scan, offset + 10);
+  buf.writeUInt32LE(KEYEVENTF_KEYUP, offset + 12);
+  buf.writeUInt32LE(0, offset + 16);
+}
 function sendInputText(text) {
   if (!text) return 0;
   const utf16 = Buffer.from(text, "utf16le");
   const codeUnits = utf16.length / 2;
-  const inputCount = codeUnits * 2;
+  const inputCount = 1 + codeUnits * 2;
   const buf = Buffer.alloc(inputCount * INPUT_SIZE);
+  writeVirtualKeyInput(buf, 0, VK_CONTROL$1);
   for (let i = 0; i < codeUnits; i++) {
     const code2 = utf16.readUInt16LE(i * 2);
-    const baseOffset = i * 2 * INPUT_SIZE;
+    const baseOffset = (1 + i * 2) * INPUT_SIZE;
     writeUnicodeInput(buf, baseOffset, code2, false);
     writeUnicodeInput(buf, baseOffset + INPUT_SIZE, code2, true);
   }
   return SendInput(inputCount, buf, INPUT_SIZE);
 }
+const COSMIC_INSIGHT_ID = 8347;
+const COSMIC_INSIGHT_HASTE = 18;
+const ACCOUNT_REGION = "americas.api.riotgames.com";
+const PLATFORM = "na1.api.riotgames.com";
+let apiKey = "";
+function setApiKey(key) {
+  apiKey = key;
+}
+function riotGet(host, path2) {
+  return new Promise((resolve2) => {
+    if (!apiKey) {
+      resolve2(null);
+      return;
+    }
+    const req = https$1.get(`https://${host}${path2}`, {
+      headers: { "X-Riot-Token": apiKey },
+      timeout: 5e3
+    }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => data += chunk);
+      res.on("end", () => {
+        try {
+          resolve2(JSON.parse(data));
+        } catch {
+          resolve2(null);
+        }
+      });
+    });
+    req.on("error", () => resolve2(null));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve2(null);
+    });
+  });
+}
+async function getPuuid(gameName, tagLine) {
+  const data = await riotGet(
+    ACCOUNT_REGION,
+    `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
+  );
+  return (data == null ? void 0 : data.puuid) ?? null;
+}
+async function getSpectatorData(puuid) {
+  return riotGet(PLATFORM, `/lol/spectator/v5/active-games/by-summoner/${puuid}`);
+}
+async function fetchEnemyRuneHaste(activePlayerName, allPlayers) {
+  var _a, _b;
+  const result = {};
+  const activePlayer = allPlayers.find(
+    (p) => p.summonerName === activePlayerName || p.riotId === activePlayerName
+  );
+  if (!activePlayer) return result;
+  let gameName = activePlayer.riotIdGameName || "";
+  let tagLine = activePlayer.riotIdTagLine || "";
+  if (!gameName && activePlayer.riotId) {
+    const parts = activePlayer.riotId.split("#");
+    gameName = parts[0] || "";
+    tagLine = parts[1] || "";
+  }
+  if (!gameName || !tagLine) return result;
+  const puuid = await getPuuid(gameName, tagLine);
+  if (!puuid) {
+    console.log("[RiotAPI] Failed to get PUUID for", gameName, tagLine);
+    return result;
+  }
+  const gameData = await getSpectatorData(puuid);
+  if (!gameData || !gameData.participants) {
+    console.log("[RiotAPI] Failed to get spectator data");
+    return result;
+  }
+  const myTeamId = (_a = gameData.participants.find((p) => p.puuid === puuid)) == null ? void 0 : _a.teamId;
+  for (const participant of gameData.participants) {
+    if (participant.teamId === myTeamId) continue;
+    const perkIds = ((_b = participant.perks) == null ? void 0 : _b.perkIds) || [];
+    const runeHaste = perkIds.includes(COSMIC_INSIGHT_ID) ? COSMIC_INSIGHT_HASTE : 0;
+    const riotId = participant.riotId || "";
+    if (riotId) {
+      result[riotId] = runeHaste;
+    }
+  }
+  console.log("[RiotAPI] Enemy rune haste:", result);
+  return result;
+}
 const store = new Store({
   defaults: {
     windowX: null,
     windowY: null,
-    screenLocked: false
+    screenLocked: false,
+    riotApiKey: "RGAPI-da63f0c5-654a-4cd5-92a5-8bda40079ae7"
   }
 });
+setApiKey(store.get("riotApiKey", ""));
 let mainWindow = null;
 let tray = null;
 let isScreenLocked = store.get("screenLocked", false);
@@ -14991,7 +15088,7 @@ function createWindow() {
   const savedY = store.get("windowY", null);
   mainWindow = new require$$1$2.BrowserWindow({
     width: 500,
-    height: 780,
+    height: 100,
     ...savedX !== null && savedY !== null ? { x: savedX, y: savedY } : {},
     transparent: true,
     frame: false,
@@ -15048,41 +15145,10 @@ require$$1$2.ipcMain.handle("get-active-player", async () => {
   return fetchLeagueAPI("/liveclientdata/activeplayername");
 });
 require$$1$2.ipcMain.handle("get-all-game-data", async () => {
-  var _a;
-  const data = await fetchLeagueAPI("/liveclientdata/allgamedata");
-  if (data && typeof data === "object") {
-    const ap = data.activePlayer;
-    const players = data.allPlayers;
-    console.log("[LeagueAPI] activePlayer keys:", ap ? Object.keys(ap).join(",") : "null");
-    console.log("[LeagueAPI] activePlayer.summonerName:", ap == null ? void 0 : ap.summonerName);
-    console.log("[LeagueAPI] activePlayer.riotId:", ap == null ? void 0 : ap.riotId);
-    console.log("[LeagueAPI] allPlayers count:", Array.isArray(players) ? players.length : 0);
-    if (players && players.length > 0) {
-      const p0 = players[0];
-      console.log("[LeagueAPI] player[0] keys:", Object.keys(p0).join(","));
-      console.log("[LeagueAPI] player[0] summonerName:", p0.summonerName, "team:", p0.team, "champion:", p0.championName);
-    }
-    const gd = data.gameData;
-    console.log("[LeagueAPI] gameData:", gd ? JSON.stringify(gd).substring(0, 200) : "null");
-    if (players && players.length > 0) {
-      const teams = {};
-      for (const p of players) {
-        const t2 = String(p.team || "UNKNOWN");
-        teams[t2] = (teams[t2] || 0) + 1;
-      }
-      console.log("[LeagueAPI] teams:", JSON.stringify(teams));
-      const myTeam = (_a = players.find(
-        (p) => p.summonerName === (ap == null ? void 0 : ap.summonerName) || p.riotId === (ap == null ? void 0 : ap.riotId)
-      )) == null ? void 0 : _a.team;
-      console.log("[LeagueAPI] myTeam:", myTeam);
-      const enemies = players.filter((p) => p.team !== myTeam);
-      console.log("[LeagueAPI] enemies count:", enemies.length);
-      for (const e of enemies) {
-        console.log(`[LeagueAPI] enemy: ${e.championName} position="${e.position}" team=${e.team}`);
-      }
-    }
-  }
-  return data;
+  return fetchLeagueAPI("/liveclientdata/allgamedata");
+});
+require$$1$2.ipcMain.handle("get-enemy-rune-haste", async (_event, activePlayerName, allPlayers) => {
+  return fetchEnemyRuneHaste(activePlayerName, allPlayers);
 });
 require$$1$2.ipcMain.on("save-position", (_event, pos) => {
   store.set("windowX", pos.x);
@@ -15105,7 +15171,9 @@ require$$1$2.ipcMain.handle("get-screen-lock", () => {
 });
 require$$1$2.ipcMain.on("set-window-size", (_event, width, height) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setResizable(true);
     mainWindow.setSize(width, height);
+    mainWindow.setResizable(false);
   }
 });
 require$$1$2.ipcMain.on("set-ignore-mouse", (_event, ignore) => {
@@ -15140,55 +15208,50 @@ function fetchLeagueAPI(endpoint) {
         res.on("data", (chunk) => data += chunk);
         res.on("end", () => {
           try {
-            const parsed = JSON.parse(data);
-            console.log(
-              `[LeagueAPI] ${endpoint} OK, keys:`,
-              typeof parsed === "object" && parsed !== null ? Object.keys(parsed).join(",") : typeof parsed
-            );
-            resolve2(parsed);
+            resolve2(JSON.parse(data));
           } catch {
-            console.log(`[LeagueAPI] ${endpoint} parse error, raw:`, data.substring(0, 200));
             resolve2(null);
           }
         });
       }
     );
-    req.on("error", (err) => {
-      console.log(`[LeagueAPI] ${endpoint} error:`, err.message);
-      resolve2(null);
-    });
+    req.on("error", () => resolve2(null));
     req.on("timeout", () => {
-      console.log(`[LeagueAPI] ${endpoint} timeout`);
       req.destroy();
       resolve2(null);
     });
   });
 }
-let ctrlVRegistered = false;
 let tabPollTimer = null;
+let ctrlVPollTimer = null;
 let tabWasDown = false;
+let vWasDown = false;
 let isInGame = false;
+const VK_CONTROL = 17;
+const VK_V = 86;
 function enableInGameFeatures() {
   if (isInGame) return;
   isInGame = true;
-  if (!ctrlVRegistered) {
-    require$$1$2.globalShortcut.register("CommandOrControl+V", () => {
+  vWasDown = false;
+  ctrlVPollTimer = setInterval(() => {
+    const vDown = isKeyDown(VK_V);
+    if (isKeyDown(VK_CONTROL) && vDown && !vWasDown) {
       const text = require$$1$2.clipboard.readText();
       if (text) sendInputText(text);
-    });
-    ctrlVRegistered = true;
-  }
+    }
+    vWasDown = vDown;
+  }, 50);
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.hide();
+    mainWindow.setOpacity(0);
   }
   tabWasDown = false;
   tabPollTimer = setInterval(() => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     const tabDown = isTabDown();
     if (tabDown && !tabWasDown) {
-      mainWindow.showInactive();
+      mainWindow.setOpacity(1);
     } else if (!tabDown && tabWasDown) {
-      mainWindow.hide();
+      mainWindow.setOpacity(0);
     }
     tabWasDown = tabDown;
   }, 50);
@@ -15197,9 +15260,9 @@ function enableInGameFeatures() {
 function disableInGameFeatures() {
   if (!isInGame) return;
   isInGame = false;
-  if (ctrlVRegistered) {
-    require$$1$2.globalShortcut.unregister("CommandOrControl+V");
-    ctrlVRegistered = false;
+  if (ctrlVPollTimer) {
+    clearInterval(ctrlVPollTimer);
+    ctrlVPollTimer = null;
   }
   if (tabPollTimer) {
     clearInterval(tabPollTimer);
@@ -15207,7 +15270,7 @@ function disableInGameFeatures() {
   }
   tabWasDown = false;
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.show();
+    mainWindow.setOpacity(1);
   }
   console.log("[InGame] Features disabled");
 }

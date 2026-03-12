@@ -4,7 +4,7 @@ import type { Position, SpellName } from '../types'
 export const DDRAGON_VERSION = '16.5.1'
 
 /** Reaction time compensation in seconds (subtracted from CD) */
-export const REACTION_COMPENSATION = 3
+export const REACTION_COMPENSATION = 0
 
 /** API polling interval in ms */
 export const API_POLL_INTERVAL = 3000

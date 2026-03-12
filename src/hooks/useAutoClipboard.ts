@@ -21,10 +21,7 @@ export function useAutoClipboard() {
 
         if (text !== prevTextRef.current) {
             prevTextRef.current = text
-            // Write to clipboard (empty string clears it when all timers expire)
-            if (text) {
-                window.electronAPI.copyToClipboard(text)
-            }
+            window.electronAPI.copyToClipboard(text)
         }
     })
 }

@@ -6,7 +6,8 @@ import type { PlayerData } from '../types'
 
 /**
  * Hook that polls League Live Client API to detect game state and enemy info.
- * Uses /allgamedata (same as league-spell-tracker) for reliable detection.
+ * Uses sub-endpoints (playerlist + gamestats + activeplayername) instead of
+ * allgamedata to reduce payload size (~15-20KB vs 30-200KB).
  */
 export function useGameDetect() {
     const setGameState = useTimerStore((s) => s.setGameState)
@@ -19,12 +20,19 @@ export function useGameDetect() {
     const prevRosterRef = useRef<string>('')
     const prevGameTimeRef = useRef<number | null>(null)
     const prevInGameRef = useRef(false)
+    const runeHasteRef = useRef<Record<string, number>>({})
+    const runeHasteFetchedRef = useRef(false)
 
     // Notify main process when in-game state changes (for Ctrl+V override)
     useEffect(() => {
         if (isInGame !== prevInGameRef.current) {
             prevInGameRef.current = isInGame
             window.electronAPI.setInGame(isInGame)
+            if (!isInGame) {
+                // Reset rune haste when leaving game
+                runeHasteRef.current = {}
+                runeHasteFetchedRef.current = false
+            }
         }
     }, [isInGame])
 
@@ -35,13 +43,16 @@ export function useGameDetect() {
             if (!active) return
 
             try {
-                // Use allgamedata — same approach as league-spell-tracker
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const data: any = await window.electronAPI.getAllGameData()
+                // Fetch sub-endpoints in parallel (~15-20KB total vs 30-200KB for allgamedata)
+                const [playerList, gameStats, activePlayerName] = await Promise.all([
+                    window.electronAPI.getPlayerList(),
+                    window.electronAPI.getGameStats(),
+                    window.electronAPI.getActivePlayer() as Promise<string | null>,
+                ])
 
                 if (!active) return
 
-                if (!data || !data.allPlayers) {
+                if (!playerList || !Array.isArray(playerList) || playerList.length === 0) {
                     failCountRef.current++
                     if (failCountRef.current >= 5) {
                         setGameState(false, null)
@@ -55,16 +66,8 @@ export function useGameDetect() {
 
                 failCountRef.current = 0
 
-                // Extract data — match league-spell-tracker's field access pattern
-                const allPlayers: PlayerData[] = data.allPlayers
-                const gameTime: number = data.gameData?.gameTime ?? 0
-
-                // Get active player name from the response
-                // allgamedata.activePlayer has summonerName and riotId
-                const activePlayerName: string =
-                    data.activePlayer?.summonerName ||
-                    data.activePlayer?.riotId ||
-                    ''
+                const allPlayers: PlayerData[] = playerList as PlayerData[]
+                const gameTime: number = (gameStats as any)?.gameTime ?? 0
 
                 // New game detection: gameTime regression
                 if (
@@ -74,15 +77,30 @@ export function useGameDetect() {
                     clearAllTimers()
                     prevEnemiesRef.current = ''
                     prevRosterRef.current = ''
+                    runeHasteRef.current = {}
+                    runeHasteFetchedRef.current = false
                 }
 
                 prevGameTimeRef.current = gameTime
                 setGameState(true, gameTime)
 
-                if (!activePlayerName || allPlayers.length === 0) return
+                if (!activePlayerName) return
 
-                // Parse enemies — same as league-spell-tracker
-                const parsed = parseEnemies(allPlayers, activePlayerName)
+                // Fetch enemy rune haste once per game via Riot API
+                if (!runeHasteFetchedRef.current) {
+                    runeHasteFetchedRef.current = true
+                    try {
+                        const haste = await (window.electronAPI as any).getEnemyRuneHaste(activePlayerName, allPlayers)
+                        if (haste && typeof haste === 'object') {
+                            runeHasteRef.current = haste
+                        }
+                    } catch {
+                        // Riot API not available, continue without rune haste
+                    }
+                }
+
+                // Parse enemies with rune haste
+                const parsed = parseEnemies(allPlayers, activePlayerName, runeHasteRef.current)
 
                 if (parsed.length === 0) return
 

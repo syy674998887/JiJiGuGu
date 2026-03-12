@@ -12,6 +12,8 @@ import koffi from 'koffi'
 const INPUT_KEYBOARD = 1
 const KEYEVENTF_UNICODE = 0x0004
 const KEYEVENTF_KEYUP = 0x0002
+const VK_CONTROL = 0x11
+const MAPVK_VK_TO_VSC = 0
 
 const user32 = koffi.load('user32.dll')
 
@@ -20,6 +22,8 @@ const SendInput = user32.func('__stdcall', 'SendInput', 'uint', [
     'void *',   // pInputs (raw buffer)
     'int',      // cbSize
 ])
+
+const MapVirtualKeyW = user32.func('__stdcall', 'MapVirtualKeyW', 'uint', ['uint', 'uint'])
 
 // sizeof(INPUT) on x64 = 40 bytes
 const INPUT_SIZE = 40
@@ -58,18 +62,34 @@ export function isTabDown(): boolean {
     return isKeyDown(VK_TAB)
 }
 
+/**
+ * Write a virtual-key INPUT struct (for modifier key release/press).
+ */
+function writeVirtualKeyInput(buf: Buffer, offset: number, vk: number, keyUp: boolean) {
+    const scan = MapVirtualKeyW(vk, MAPVK_VK_TO_VSC) as number
+    buf.writeUInt32LE(INPUT_KEYBOARD, offset + 0)
+    buf.writeUInt16LE(vk, offset + 8)               // wVk
+    buf.writeUInt16LE(scan, offset + 10)             // wScan
+    buf.writeUInt32LE(keyUp ? KEYEVENTF_KEYUP : 0, offset + 12)
+    buf.writeUInt32LE(0, offset + 16)
+}
+
 export function sendInputText(text: string): number {
     if (!text) return 0
 
     const utf16 = Buffer.from(text, 'utf16le')
     const codeUnits = utf16.length / 2
 
-    const inputCount = codeUnits * 2
+    // +1 at start to release Ctrl key before typing
+    const inputCount = 1 + codeUnits * 2
     const buf = Buffer.alloc(inputCount * INPUT_SIZE)
+
+    // Release Ctrl first so characters aren't interpreted as Ctrl+char
+    writeVirtualKeyInput(buf, 0, VK_CONTROL, true)
 
     for (let i = 0; i < codeUnits; i++) {
         const code = utf16.readUInt16LE(i * 2)
-        const baseOffset = i * 2 * INPUT_SIZE
+        const baseOffset = (1 + i * 2) * INPUT_SIZE
         writeUnicodeInput(buf, baseOffset, code, false)
         writeUnicodeInput(buf, baseOffset + INPUT_SIZE, code, true)
     }

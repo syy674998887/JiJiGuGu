@@ -20,6 +20,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   },
   setWindowSize: (width, height) => electron.ipcRenderer.send("set-window-size", width, height),
   setIgnoreMouseEvents: (ignore) => electron.ipcRenderer.send("set-ignore-mouse", ignore),
-  setInGame: (inGame) => electron.ipcRenderer.send("set-in-game", inGame)
+  setInGame: (inGame) => electron.ipcRenderer.send("set-in-game", inGame),
+  getEnemyRuneHaste: (activePlayerName, allPlayers) => electron.ipcRenderer.invoke("get-enemy-rune-haste", activePlayerName, allPlayers)
 });
 //# sourceMappingURL=preload.js.map

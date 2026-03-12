@@ -98,10 +98,12 @@ function hasSmite(enemy: PlayerData): boolean {
 /**
  * Parse enemy team from allgamedata response.
  * Returns 5 parsed enemies with position assignment.
+ * runeHasteMap: riotId → extra haste from runes (e.g. Cosmic Insight +18)
  */
 export function parseEnemies(
     playerList: PlayerData[],
     activePlayerName: string,
+    runeHasteMap: Record<string, number> = {},
 ): ParsedEnemy[] {
     // Find active player's team
     const activePlayer = playerList.find(
@@ -121,6 +123,13 @@ export function parseEnemies(
     let jgAssigned = false
     const remaining: PlayerData[] = []
 
+    function getHaste(enemy: PlayerData): number {
+        const itemHaste = calcItemHaste(enemy.items)
+        const riotId = enemy.riotId || ''
+        const runeHaste = runeHasteMap[riotId] || 0
+        return itemHaste + runeHaste
+    }
+
     for (const enemy of enemies) {
         if (!jgAssigned && hasSmite(enemy)) {
             const { spell1, spell2 } = parseSpellsFromEnemy(enemy)
@@ -129,7 +138,7 @@ export function parseEnemies(
                 championName: getEnglishChampionName(enemy),
                 spell1,
                 spell2,
-                haste: calcItemHaste(enemy.items),
+                haste: getHaste(enemy),
             })
             jgAssigned = true
         } else {
@@ -146,7 +155,7 @@ export function parseEnemies(
             championName: getEnglishChampionName(enemy),
             spell1,
             spell2,
-            haste: calcItemHaste(enemy.items),
+            haste: getHaste(enemy),
         })
         posIdx++
     }
@@ -159,7 +168,7 @@ export function parseEnemies(
             championName: getEnglishChampionName(enemy),
             spell1,
             spell2,
-            haste: calcItemHaste(enemy.items),
+            haste: getHaste(enemy),
         })
     }
 

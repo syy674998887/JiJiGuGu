@@ -1,9 +1,10 @@
 import type { Position, EnemyState } from '../types'
 import { POSITIONS } from '../constants/config'
 
-/** "TOP" → "Top", "JG" → "Jng", "ADC" → "Adc" etc. */
+/** "TOP" → "Top", "JG" → "Jng", "ADC" → "Bot" etc. */
 function capitalizePos(pos: Position): string {
     if (pos === 'JG') return 'Jng'
+    if (pos === 'ADC') return 'Bot'
     return pos[0] + pos.slice(1).toLowerCase()
 }
 
@@ -20,8 +21,7 @@ export function formatComebackTime(gameTimeSeconds: number): string {
 
 /**
  * Format a single timer as clipboard text.
- * With game time: "Top 15:25"
- * Without game time: "Top 4:35"
+ * e.g. "15:25Top"
  */
 export function formatTimerText(
     position: Position,
@@ -30,17 +30,16 @@ export function formatTimerText(
 ): string {
     const label = capitalizePos(position)
     if (comebackGameTime !== null) {
-        return `${label} ${formatComebackTime(comebackGameTime)}`
+        return `${formatComebackTime(comebackGameTime)}${label}`
     }
     const m = Math.floor(remainingSeconds / 60)
     const s = remainingSeconds % 60
-    return `${label} ${m}:${s.toString().padStart(2, '0')}`
+    return `${m}:${s.toString().padStart(2, '0')}${label}`
 }
 
 /**
  * Format all active Flash timers as a single clipboard string.
- * e.g. "Top 15:25 Mid 20:00 Sup 18:30"
- * Only includes timers that are actually still counting down (not expired/ready).
+ * e.g. "15:25Top 20:00Mid 18:30Sup"
  */
 export function formatAllTimers(
     enemies: Record<Position, EnemyState>,
@@ -58,7 +57,7 @@ export function formatAllTimers(
             ) {
                 if (slot.comebackGameTime !== null) {
                     parts.push(
-                        `${label} ${formatComebackTime(slot.comebackGameTime)}`,
+                        `${formatComebackTime(slot.comebackGameTime)}${label}`,
                     )
                 } else {
                     const remaining = Math.max(
@@ -69,7 +68,7 @@ export function formatAllTimers(
                         const m = Math.floor(remaining / 60)
                         const s = remaining % 60
                         parts.push(
-                            `${label} ${m}:${s.toString().padStart(2, '0')}`,
+                            `${m}:${s.toString().padStart(2, '0')}${label}`,
                         )
                     }
                 }

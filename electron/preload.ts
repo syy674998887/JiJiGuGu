@@ -33,4 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     setInGame: (inGame: boolean) =>
         ipcRenderer.send('set-in-game', inGame),
+
+    getEnemyRuneHaste: (activePlayerName: string, allPlayers: unknown[]) =>
+        ipcRenderer.invoke('get-enemy-rune-haste', activePlayerName, allPlayers),
 })

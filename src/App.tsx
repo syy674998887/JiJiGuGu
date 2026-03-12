@@ -42,6 +42,7 @@ function App() {
     }, [isLocked])
 
     // Auto-resize window to fit content
+    const prevSizeRef = useRef({ w: 0, h: 0 })
     useEffect(() => {
         const el = appRef.current
         if (!el) return
@@ -49,7 +50,10 @@ function App() {
             const zoom = 1.25
             const width = Math.ceil(el.offsetWidth * zoom)
             const height = Math.ceil(el.offsetHeight * zoom)
-            window.electronAPI.setWindowSize(width, height)
+            if (width !== prevSizeRef.current.w || height !== prevSizeRef.current.h) {
+                prevSizeRef.current = { w: width, h: height }
+                window.electronAPI.setWindowSize(width, height)
+            }
         })
         observer.observe(el)
         return () => observer.disconnect()

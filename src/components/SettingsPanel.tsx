@@ -7,6 +7,8 @@ interface SettingsPanelProps {
 export default function SettingsPanel({ onClose }: SettingsPanelProps) {
     const reactionDelay = useTimerStore((s) => s.reactionDelay)
     const setReactionDelay = useTimerStore((s) => s.setReactionDelay)
+    const debug = useTimerStore((s) => s.debug)
+    const setDebug = useTimerStore((s) => s.setDebug)
 
     return (
         <div className="settings-panel">
@@ -34,6 +36,19 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                     />
                     <span className="settings-unit">s</span>
                 </div>
+            </div>
+            <div className="settings-row">
+                <label className="settings-label">
+                    Debug
+                    <span className="settings-hint">Show clipboard preview text at the bottom</span>
+                </label>
+                <button
+                    className={`title-btn${debug ? ' lock-btn active' : ''}`}
+                    onClick={() => setDebug(!debug)}
+                    style={{ width: 'auto', padding: '0 8px', fontSize: '12px' }}
+                >
+                    {debug ? 'ON' : 'OFF'}
+                </button>
             </div>
 
             <div className="settings-tips">

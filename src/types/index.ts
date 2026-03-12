@@ -42,6 +42,7 @@ export interface TimerStore {
     isInGame: boolean
     gameTime: number | null
     reactionDelay: number
+    debug: boolean
 
     startTimer: (pos: Position, slot: SpellSlot) => Promise<void>
     resetTimer: (pos: Position, slot: SpellSlot) => void
@@ -51,6 +52,7 @@ export interface TimerStore {
     swapPositions: (posA: Position, posB: Position) => void
     clearAllTimers: () => void
     setReactionDelay: (seconds: number) => void
+    setDebug: (on: boolean) => void
 }
 
 /** Parsed enemy from League API */
