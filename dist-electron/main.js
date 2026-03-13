@@ -1,7 +1,7 @@
 "use strict";
 const require$$1$2 = require("electron");
 const https$1 = require("node:https");
-const path$6 = require("node:path");
+const path$7 = require("node:path");
 const require$$0$1 = require("path");
 const require$$1$1 = require("util");
 const require$$0 = require("fs");
@@ -122,15 +122,15 @@ var pkgUp = { exports: {} };
 var findUp$1 = { exports: {} };
 var locatePath$1 = { exports: {} };
 var pathExists$1 = { exports: {} };
-const fs$2 = require$$0;
+const fs$3 = require$$0;
 pathExists$1.exports = (fp) => new Promise((resolve2) => {
-  fs$2.access(fp, (err) => {
+  fs$3.access(fp, (err) => {
     resolve2(!err);
   });
 });
 pathExists$1.exports.sync = (fp) => {
   try {
-    fs$2.accessSync(fp);
+    fs$3.accessSync(fp);
     return true;
   } catch (err) {
     return false;
@@ -210,59 +210,59 @@ var pLocate$1 = (iterable, tester, opts) => {
   return Promise.all(items2.map((el) => checkLimit(finder, el))).then(() => {
   }).catch((err) => err instanceof EndError ? err.value : Promise.reject(err));
 };
-const path$5 = require$$0$1;
+const path$6 = require$$0$1;
 const pathExists = pathExistsExports;
 const pLocate = pLocate$1;
 locatePath$1.exports = (iterable, options) => {
   options = Object.assign({
     cwd: process.cwd()
   }, options);
-  return pLocate(iterable, (el) => pathExists(path$5.resolve(options.cwd, el)), options);
+  return pLocate(iterable, (el) => pathExists(path$6.resolve(options.cwd, el)), options);
 };
 locatePath$1.exports.sync = (iterable, options) => {
   options = Object.assign({
     cwd: process.cwd()
   }, options);
   for (const el of iterable) {
-    if (pathExists.sync(path$5.resolve(options.cwd, el))) {
+    if (pathExists.sync(path$6.resolve(options.cwd, el))) {
       return el;
     }
   }
 };
 var locatePathExports = locatePath$1.exports;
-const path$4 = require$$0$1;
+const path$5 = require$$0$1;
 const locatePath = locatePathExports;
 findUp$1.exports = (filename, opts = {}) => {
-  const startDir = path$4.resolve(opts.cwd || "");
-  const { root } = path$4.parse(startDir);
+  const startDir = path$5.resolve(opts.cwd || "");
+  const { root } = path$5.parse(startDir);
   const filenames = [].concat(filename);
   return new Promise((resolve2) => {
     (function find(dir) {
       locatePath(filenames, { cwd: dir }).then((file) => {
         if (file) {
-          resolve2(path$4.join(dir, file));
+          resolve2(path$5.join(dir, file));
         } else if (dir === root) {
           resolve2(null);
         } else {
-          find(path$4.dirname(dir));
+          find(path$5.dirname(dir));
         }
       });
     })(startDir);
   });
 };
 findUp$1.exports.sync = (filename, opts = {}) => {
-  let dir = path$4.resolve(opts.cwd || "");
-  const { root } = path$4.parse(dir);
+  let dir = path$5.resolve(opts.cwd || "");
+  const { root } = path$5.parse(dir);
   const filenames = [].concat(filename);
   while (true) {
     const file = locatePath.sync(filenames, { cwd: dir });
     if (file) {
-      return path$4.join(dir, file);
+      return path$5.join(dir, file);
     }
     if (dir === root) {
       return null;
     }
-    dir = path$4.dirname(dir);
+    dir = path$5.dirname(dir);
   }
 };
 var findUpExports = findUp$1.exports;
@@ -271,42 +271,42 @@ pkgUp.exports = async ({ cwd } = {}) => findUp("package.json", { cwd });
 pkgUp.exports.sync = ({ cwd } = {}) => findUp.sync("package.json", { cwd });
 var pkgUpExports = pkgUp.exports;
 var envPaths$1 = { exports: {} };
-const path$3 = require$$0$1;
+const path$4 = require$$0$1;
 const os = require$$1;
 const homedir = os.homedir();
 const tmpdir = os.tmpdir();
 const { env } = process;
 const macos = (name) => {
-  const library = path$3.join(homedir, "Library");
+  const library = path$4.join(homedir, "Library");
   return {
-    data: path$3.join(library, "Application Support", name),
-    config: path$3.join(library, "Preferences", name),
-    cache: path$3.join(library, "Caches", name),
-    log: path$3.join(library, "Logs", name),
-    temp: path$3.join(tmpdir, name)
+    data: path$4.join(library, "Application Support", name),
+    config: path$4.join(library, "Preferences", name),
+    cache: path$4.join(library, "Caches", name),
+    log: path$4.join(library, "Logs", name),
+    temp: path$4.join(tmpdir, name)
   };
 };
 const windows = (name) => {
-  const appData = env.APPDATA || path$3.join(homedir, "AppData", "Roaming");
-  const localAppData = env.LOCALAPPDATA || path$3.join(homedir, "AppData", "Local");
+  const appData = env.APPDATA || path$4.join(homedir, "AppData", "Roaming");
+  const localAppData = env.LOCALAPPDATA || path$4.join(homedir, "AppData", "Local");
   return {
     // Data/config/cache/log are invented by me as Windows isn't opinionated about this
-    data: path$3.join(localAppData, name, "Data"),
-    config: path$3.join(appData, name, "Config"),
-    cache: path$3.join(localAppData, name, "Cache"),
-    log: path$3.join(localAppData, name, "Log"),
-    temp: path$3.join(tmpdir, name)
+    data: path$4.join(localAppData, name, "Data"),
+    config: path$4.join(appData, name, "Config"),
+    cache: path$4.join(localAppData, name, "Cache"),
+    log: path$4.join(localAppData, name, "Log"),
+    temp: path$4.join(tmpdir, name)
   };
 };
 const linux = (name) => {
-  const username = path$3.basename(homedir);
+  const username = path$4.basename(homedir);
   return {
-    data: path$3.join(env.XDG_DATA_HOME || path$3.join(homedir, ".local", "share"), name),
-    config: path$3.join(env.XDG_CONFIG_HOME || path$3.join(homedir, ".config"), name),
-    cache: path$3.join(env.XDG_CACHE_HOME || path$3.join(homedir, ".cache"), name),
+    data: path$4.join(env.XDG_DATA_HOME || path$4.join(homedir, ".local", "share"), name),
+    config: path$4.join(env.XDG_CONFIG_HOME || path$4.join(homedir, ".config"), name),
+    cache: path$4.join(env.XDG_CACHE_HOME || path$4.join(homedir, ".cache"), name),
     // https://wiki.debian.org/XDGBaseDirectorySpecification#state
-    log: path$3.join(env.XDG_STATE_HOME || path$3.join(homedir, ".local", "state"), name),
-    temp: path$3.join(tmpdir, username, name)
+    log: path$4.join(env.XDG_STATE_HOME || path$4.join(homedir, ".local", "state"), name),
+    temp: path$4.join(tmpdir, username, name)
   };
 };
 const envPaths = (name, options) => {
@@ -357,7 +357,7 @@ consts.LIMIT_FILES_DESCRIPTORS = LIMIT_FILES_DESCRIPTORS;
 const NOOP = () => {
 };
 consts.NOOP = NOOP;
-var fs$1 = {};
+var fs$2 = {};
 var attemptify = {};
 Object.defineProperty(attemptify, "__esModule", { value: true });
 attemptify.attemptifySync = attemptify.attemptifyAsync = void 0;
@@ -499,44 +499,44 @@ const retryifySync = (fn, isRetriableError) => {
   };
 };
 retryify.retryifySync = retryifySync;
-Object.defineProperty(fs$1, "__esModule", { value: true });
-const fs = require$$0;
+Object.defineProperty(fs$2, "__esModule", { value: true });
+const fs$1 = require$$0;
 const util_1$U = require$$1$1;
 const attemptify_1 = attemptify;
 const fs_handlers_1 = fs_handlers;
 const retryify_1 = retryify;
 const FS = {
-  chmodAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.chmod), fs_handlers_1.default.onChangeError),
-  chownAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.chown), fs_handlers_1.default.onChangeError),
-  closeAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.close)),
-  fsyncAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.fsync)),
-  mkdirAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.mkdir)),
-  realpathAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.realpath)),
-  statAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.stat)),
-  unlinkAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs.unlink)),
-  closeRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.close), fs_handlers_1.default.isRetriableError),
-  fsyncRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.fsync), fs_handlers_1.default.isRetriableError),
-  openRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.open), fs_handlers_1.default.isRetriableError),
-  readFileRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.readFile), fs_handlers_1.default.isRetriableError),
-  renameRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.rename), fs_handlers_1.default.isRetriableError),
-  statRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.stat), fs_handlers_1.default.isRetriableError),
-  writeRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs.write), fs_handlers_1.default.isRetriableError),
-  chmodSyncAttempt: attemptify_1.attemptifySync(fs.chmodSync, fs_handlers_1.default.onChangeError),
-  chownSyncAttempt: attemptify_1.attemptifySync(fs.chownSync, fs_handlers_1.default.onChangeError),
-  closeSyncAttempt: attemptify_1.attemptifySync(fs.closeSync),
-  mkdirSyncAttempt: attemptify_1.attemptifySync(fs.mkdirSync),
-  realpathSyncAttempt: attemptify_1.attemptifySync(fs.realpathSync),
-  statSyncAttempt: attemptify_1.attemptifySync(fs.statSync),
-  unlinkSyncAttempt: attemptify_1.attemptifySync(fs.unlinkSync),
-  closeSyncRetry: retryify_1.retryifySync(fs.closeSync, fs_handlers_1.default.isRetriableError),
-  fsyncSyncRetry: retryify_1.retryifySync(fs.fsyncSync, fs_handlers_1.default.isRetriableError),
-  openSyncRetry: retryify_1.retryifySync(fs.openSync, fs_handlers_1.default.isRetriableError),
-  readFileSyncRetry: retryify_1.retryifySync(fs.readFileSync, fs_handlers_1.default.isRetriableError),
-  renameSyncRetry: retryify_1.retryifySync(fs.renameSync, fs_handlers_1.default.isRetriableError),
-  statSyncRetry: retryify_1.retryifySync(fs.statSync, fs_handlers_1.default.isRetriableError),
-  writeSyncRetry: retryify_1.retryifySync(fs.writeSync, fs_handlers_1.default.isRetriableError)
+  chmodAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.chmod), fs_handlers_1.default.onChangeError),
+  chownAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.chown), fs_handlers_1.default.onChangeError),
+  closeAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.close)),
+  fsyncAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.fsync)),
+  mkdirAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.mkdir)),
+  realpathAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.realpath)),
+  statAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.stat)),
+  unlinkAttempt: attemptify_1.attemptifyAsync(util_1$U.promisify(fs$1.unlink)),
+  closeRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.close), fs_handlers_1.default.isRetriableError),
+  fsyncRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.fsync), fs_handlers_1.default.isRetriableError),
+  openRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.open), fs_handlers_1.default.isRetriableError),
+  readFileRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.readFile), fs_handlers_1.default.isRetriableError),
+  renameRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.rename), fs_handlers_1.default.isRetriableError),
+  statRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.stat), fs_handlers_1.default.isRetriableError),
+  writeRetry: retryify_1.retryifyAsync(util_1$U.promisify(fs$1.write), fs_handlers_1.default.isRetriableError),
+  chmodSyncAttempt: attemptify_1.attemptifySync(fs$1.chmodSync, fs_handlers_1.default.onChangeError),
+  chownSyncAttempt: attemptify_1.attemptifySync(fs$1.chownSync, fs_handlers_1.default.onChangeError),
+  closeSyncAttempt: attemptify_1.attemptifySync(fs$1.closeSync),
+  mkdirSyncAttempt: attemptify_1.attemptifySync(fs$1.mkdirSync),
+  realpathSyncAttempt: attemptify_1.attemptifySync(fs$1.realpathSync),
+  statSyncAttempt: attemptify_1.attemptifySync(fs$1.statSync),
+  unlinkSyncAttempt: attemptify_1.attemptifySync(fs$1.unlinkSync),
+  closeSyncRetry: retryify_1.retryifySync(fs$1.closeSync, fs_handlers_1.default.isRetriableError),
+  fsyncSyncRetry: retryify_1.retryifySync(fs$1.fsyncSync, fs_handlers_1.default.isRetriableError),
+  openSyncRetry: retryify_1.retryifySync(fs$1.openSync, fs_handlers_1.default.isRetriableError),
+  readFileSyncRetry: retryify_1.retryifySync(fs$1.readFileSync, fs_handlers_1.default.isRetriableError),
+  renameSyncRetry: retryify_1.retryifySync(fs$1.renameSync, fs_handlers_1.default.isRetriableError),
+  statSyncRetry: retryify_1.retryifySync(fs$1.statSync, fs_handlers_1.default.isRetriableError),
+  writeSyncRetry: retryify_1.retryifySync(fs$1.writeSync, fs_handlers_1.default.isRetriableError)
 };
-fs$1.default = FS;
+fs$2.default = FS;
 var lang = {};
 Object.defineProperty(lang, "__esModule", { value: true });
 const Lang = {
@@ -582,9 +582,9 @@ const Scheduler = {
 scheduler.default = Scheduler;
 var temp = {};
 Object.defineProperty(temp, "__esModule", { value: true });
-const path$2 = require$$0$1;
+const path$3 = require$$0$1;
 const consts_1$1 = consts;
-const fs_1$1 = fs$1;
+const fs_1$1 = fs$2;
 const Temp = {
   store: {},
   create: (filePath) => {
@@ -617,7 +617,7 @@ const Temp = {
     }
   },
   truncate: (filePath) => {
-    const basename = path$2.basename(filePath);
+    const basename = path$3.basename(filePath);
     if (basename.length <= consts_1$1.LIMIT_BASENAME_LENGTH)
       return filePath;
     const truncable = /^(\.?)(.*?)((?:\.[^.]+)?(?:\.tmp-\d{10}[a-f0-9]{6})?)$/.exec(basename);
@@ -631,9 +631,9 @@ process.on("exit", Temp.purgeSyncAll);
 temp.default = Temp;
 Object.defineProperty(dist$1, "__esModule", { value: true });
 dist$1.writeFileSync = dist$1.writeFile = dist$1.readFileSync = dist$1.readFile = void 0;
-const path$1 = require$$0$1;
+const path$2 = require$$0$1;
 const consts_1 = consts;
-const fs_1 = fs$1;
+const fs_1 = fs$2;
 const lang_1 = lang;
 const scheduler_1 = scheduler;
 const temp_1 = temp;
@@ -685,7 +685,7 @@ const writeFileAsync = async (filePath, data, options = consts_1.DEFAULT_WRITE_O
           options.mode = stat.mode;
       }
     }
-    const parentPath = path$1.dirname(filePath);
+    const parentPath = path$2.dirname(filePath);
     await fs_1.default.mkdirAttempt(parentPath, {
       mode: consts_1.DEFAULT_FOLDER_MODE,
       recursive: true
@@ -751,7 +751,7 @@ const writeFileSync = (filePath, data, options = consts_1.DEFAULT_WRITE_OPTIONS)
           options.mode = stat.mode;
       }
     }
-    const parentPath = path$1.dirname(filePath);
+    const parentPath = path$2.dirname(filePath);
     fs_1.default.mkdirSyncAttempt(parentPath, {
       mode: consts_1.DEFAULT_FOLDER_MODE,
       recursive: true
@@ -3000,7 +3000,7 @@ const keyword_1$1 = keyword$1;
 const subschema_1$1 = subschema$1;
 const codegen_1$T = codegen$1;
 const names_1$a = names$3;
-const resolve_1$5 = resolve$4;
+const resolve_1$4 = resolve$4;
 const util_1$O = util$1;
 const errors_1$4 = errors$1;
 function validateFunctionCode$1(it) {
@@ -3127,7 +3127,7 @@ function checkNoDefault$1(it) {
 function updateContext$1(it) {
   const schId = it.schema[it.opts.schemaId];
   if (schId)
-    it.baseId = (0, resolve_1$5.resolveUrl)(it.opts.uriResolver, it.baseId, schId);
+    it.baseId = (0, resolve_1$4.resolveUrl)(it.opts.uriResolver, it.baseId, schId);
 }
 function checkAsyncSchema$1(it) {
   if (it.schema.$async && !it.schemaEnv.$async)
@@ -3144,9 +3144,9 @@ function commentKeyword$1({ gen, schemaEnv, schema, errSchemaPath, opts }) {
   }
 }
 function returnResults$1(it) {
-  const { gen, schemaEnv, validateName, ValidationError: ValidationError3, opts } = it;
+  const { gen, schemaEnv, validateName, ValidationError: ValidationError2, opts } = it;
   if (schemaEnv.$async) {
-    gen.if((0, codegen_1$T._)`${names_1$a.default.errors} === 0`, () => gen.return(names_1$a.default.data), () => gen.throw((0, codegen_1$T._)`new ${ValidationError3}(${names_1$a.default.vErrors})`));
+    gen.if((0, codegen_1$T._)`${names_1$a.default.errors} === 0`, () => gen.return(names_1$a.default.data), () => gen.throw((0, codegen_1$T._)`new ${ValidationError2}(${names_1$a.default.vErrors})`));
   } else {
     gen.assign((0, codegen_1$T._)`${validateName}.errors`, names_1$a.default.vErrors);
     if (opts.unevaluated)
@@ -3491,32 +3491,32 @@ function getData$1($data, { dataLevel, dataNames, dataPathArr }) {
 validate$1.getData = getData$1;
 var validation_error$1 = {};
 Object.defineProperty(validation_error$1, "__esModule", { value: true });
-let ValidationError$1 = class ValidationError extends Error {
+class ValidationError extends Error {
   constructor(errors2) {
     super("validation failed");
     this.errors = errors2;
     this.ajv = this.validation = true;
   }
-};
-validation_error$1.default = ValidationError$1;
+}
+validation_error$1.default = ValidationError;
 var ref_error$1 = {};
 Object.defineProperty(ref_error$1, "__esModule", { value: true });
-const resolve_1$4 = resolve$4;
-let MissingRefError$1 = class MissingRefError extends Error {
+const resolve_1$3 = resolve$4;
+class MissingRefError extends Error {
   constructor(resolver, baseId, ref2, msg) {
     super(msg || `can't resolve reference ${ref2} from id ${baseId}`);
-    this.missingRef = (0, resolve_1$4.resolveUrl)(resolver, baseId, ref2);
-    this.missingSchema = (0, resolve_1$4.normalizeId)((0, resolve_1$4.getFullPath)(resolver, this.missingRef));
+    this.missingRef = (0, resolve_1$3.resolveUrl)(resolver, baseId, ref2);
+    this.missingSchema = (0, resolve_1$3.normalizeId)((0, resolve_1$3.getFullPath)(resolver, this.missingRef));
   }
-};
-ref_error$1.default = MissingRefError$1;
+}
+ref_error$1.default = MissingRefError;
 var compile$1 = {};
 Object.defineProperty(compile$1, "__esModule", { value: true });
 compile$1.resolveSchema = compile$1.getCompilingSchema = compile$1.resolveRef = compile$1.compileSchema = compile$1.SchemaEnv = void 0;
 const codegen_1$S = codegen$1;
 const validation_error_1$1 = validation_error$1;
 const names_1$9 = names$3;
-const resolve_1$3 = resolve$4;
+const resolve_1$2 = resolve$4;
 const util_1$N = util$1;
 const validate_1$3 = validate$1;
 let SchemaEnv$1 = class SchemaEnv {
@@ -3530,7 +3530,7 @@ let SchemaEnv$1 = class SchemaEnv {
     this.schema = env2.schema;
     this.schemaId = env2.schemaId;
     this.root = env2.root || this;
-    this.baseId = (_a = env2.baseId) !== null && _a !== void 0 ? _a : (0, resolve_1$3.normalizeId)(schema === null || schema === void 0 ? void 0 : schema[env2.schemaId || "$id"]);
+    this.baseId = (_a = env2.baseId) !== null && _a !== void 0 ? _a : (0, resolve_1$2.normalizeId)(schema === null || schema === void 0 ? void 0 : schema[env2.schemaId || "$id"]);
     this.schemaPath = env2.schemaPath;
     this.localRefs = env2.localRefs;
     this.meta = env2.meta;
@@ -3543,7 +3543,7 @@ function compileSchema$1(sch) {
   const _sch = getCompilingSchema$1.call(this, sch);
   if (_sch)
     return _sch;
-  const rootId = (0, resolve_1$3.getFullPath)(this.opts.uriResolver, sch.root.baseId);
+  const rootId = (0, resolve_1$2.getFullPath)(this.opts.uriResolver, sch.root.baseId);
   const { es5, lines } = this.opts.code;
   const { ownProperties } = this.opts;
   const gen = new codegen_1$S.CodeGen(this.scope, { es5, lines, ownProperties });
@@ -3627,7 +3627,7 @@ function compileSchema$1(sch) {
 compile$1.compileSchema = compileSchema$1;
 function resolveRef$1(root, baseId, ref2) {
   var _a;
-  ref2 = (0, resolve_1$3.resolveUrl)(this.opts.uriResolver, baseId, ref2);
+  ref2 = (0, resolve_1$2.resolveUrl)(this.opts.uriResolver, baseId, ref2);
   const schOrFunc = root.refs[ref2];
   if (schOrFunc)
     return schOrFunc;
@@ -3644,7 +3644,7 @@ function resolveRef$1(root, baseId, ref2) {
 }
 compile$1.resolveRef = resolveRef$1;
 function inlineOrCompile$1(sch) {
-  if ((0, resolve_1$3.inlineRef)(sch.schema, this.opts.inlineRefs))
+  if ((0, resolve_1$2.inlineRef)(sch.schema, this.opts.inlineRefs))
     return sch.schema;
   return sch.validate ? sch : compileSchema$1.call(this, sch);
 }
@@ -3666,12 +3666,12 @@ function resolve$3(root, ref2) {
 }
 function resolveSchema$1(root, ref2) {
   const p = this.opts.uriResolver.parse(ref2);
-  const refPath = (0, resolve_1$3._getFullPath)(this.opts.uriResolver, p);
-  let baseId = (0, resolve_1$3.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
+  const refPath = (0, resolve_1$2._getFullPath)(this.opts.uriResolver, p);
+  let baseId = (0, resolve_1$2.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
   if (Object.keys(root.schema).length > 0 && refPath === baseId) {
     return getJsonPointer$1.call(this, p, root);
   }
-  const id2 = (0, resolve_1$3.normalizeId)(refPath);
+  const id2 = (0, resolve_1$2.normalizeId)(refPath);
   const schOrRef = this.refs[id2] || this.schemas[id2];
   if (typeof schOrRef == "string") {
     const sch = resolveSchema$1.call(this, root, schOrRef);
@@ -3683,12 +3683,12 @@ function resolveSchema$1(root, ref2) {
     return;
   if (!schOrRef.validate)
     compileSchema$1.call(this, schOrRef);
-  if (id2 === (0, resolve_1$3.normalizeId)(ref2)) {
+  if (id2 === (0, resolve_1$2.normalizeId)(ref2)) {
     const { schema } = schOrRef;
     const { schemaId } = this.opts;
     const schId = schema[schemaId];
     if (schId)
-      baseId = (0, resolve_1$3.resolveUrl)(this.opts.uriResolver, baseId, schId);
+      baseId = (0, resolve_1$2.resolveUrl)(this.opts.uriResolver, baseId, schId);
     return new SchemaEnv$1({ schema, schemaId, root, baseId });
   }
   return getJsonPointer$1.call(this, p, schOrRef);
@@ -3714,12 +3714,12 @@ function getJsonPointer$1(parsedRef, { baseId, schema, root }) {
     schema = partSchema;
     const schId = typeof schema === "object" && schema[this.opts.schemaId];
     if (!PREVENT_SCOPE_CHANGE$1.has(part) && schId) {
-      baseId = (0, resolve_1$3.resolveUrl)(this.opts.uriResolver, baseId, schId);
+      baseId = (0, resolve_1$2.resolveUrl)(this.opts.uriResolver, baseId, schId);
     }
   }
   let env2;
   if (typeof schema != "boolean" && schema.$ref && !(0, util_1$N.schemaHasRulesButRef)(schema, this.RULES)) {
-    const $ref = (0, resolve_1$3.resolveUrl)(this.opts.uriResolver, baseId, schema.$ref);
+    const $ref = (0, resolve_1$2.resolveUrl)(this.opts.uriResolver, baseId, schema.$ref);
     env2 = resolveSchema$1.call(this, root, $ref);
   }
   const { schemaId } = this.opts;
@@ -4196,24 +4196,24 @@ const { SCHEMES, getSchemeHandler } = schemes;
 function normalize(uri2, options) {
   if (typeof uri2 === "string") {
     uri2 = /** @type {T} */
-    serialize(parse$7(uri2, options), options);
+    serialize(parse$8(uri2, options), options);
   } else if (typeof uri2 === "object") {
     uri2 = /** @type {T} */
-    parse$7(serialize(uri2, options), options);
+    parse$8(serialize(uri2, options), options);
   }
   return uri2;
 }
 function resolve$2(baseURI, relativeURI, options) {
   const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
-  const resolved = resolveComponent(parse$7(baseURI, schemelessOptions), parse$7(relativeURI, schemelessOptions), schemelessOptions, true);
+  const resolved = resolveComponent(parse$8(baseURI, schemelessOptions), parse$8(relativeURI, schemelessOptions), schemelessOptions, true);
   schemelessOptions.skipEscape = true;
   return serialize(resolved, schemelessOptions);
 }
 function resolveComponent(base, relative, options, skipNormalization) {
   const target = {};
   if (!skipNormalization) {
-    base = parse$7(serialize(base, options), options);
-    relative = parse$7(serialize(relative, options), options);
+    base = parse$8(serialize(base, options), options);
+    relative = parse$8(serialize(relative, options), options);
   }
   options = options || {};
   if (!options.tolerant && relative.scheme) {
@@ -4265,13 +4265,13 @@ function resolveComponent(base, relative, options, skipNormalization) {
 function equal$5(uriA, uriB, options) {
   if (typeof uriA === "string") {
     uriA = unescape(uriA);
-    uriA = serialize(normalizeComponentEncoding(parse$7(uriA, options), true), { ...options, skipEscape: true });
+    uriA = serialize(normalizeComponentEncoding(parse$8(uriA, options), true), { ...options, skipEscape: true });
   } else if (typeof uriA === "object") {
     uriA = serialize(normalizeComponentEncoding(uriA, true), { ...options, skipEscape: true });
   }
   if (typeof uriB === "string") {
     uriB = unescape(uriB);
-    uriB = serialize(normalizeComponentEncoding(parse$7(uriB, options), true), { ...options, skipEscape: true });
+    uriB = serialize(normalizeComponentEncoding(parse$8(uriB, options), true), { ...options, skipEscape: true });
   } else if (typeof uriB === "object") {
     uriB = serialize(normalizeComponentEncoding(uriB, true), { ...options, skipEscape: true });
   }
@@ -4340,7 +4340,7 @@ function serialize(cmpts, opts) {
   return uriTokens.join("");
 }
 const URI_PARSE = /^(?:([^#/:?]+):)?(?:\/\/((?:([^#/?@]*)@)?(\[[^#/?\]]+\]|[^#/:?]*)(?::(\d*))?))?([^#?]*)(?:\?([^#]*))?(?:#((?:.|[\n\r])*))?/u;
-function parse$7(uri2, opts) {
+function parse$8(uri2, opts) {
   const options = Object.assign({}, opts);
   const parsed = {
     scheme: void 0,
@@ -4434,7 +4434,7 @@ const fastUri = {
   resolveComponent,
   equal: equal$5,
   serialize,
-  parse: parse$7
+  parse: parse$8
 };
 fastUri$1.exports = fastUri;
 fastUri$1.exports.default = fastUri;
@@ -4922,11 +4922,11 @@ uri$3.default = uri$2;
   Ajv.ValidationError = validation_error_12.default;
   Ajv.MissingRefError = ref_error_12.default;
   exports$1.default = Ajv;
-  function checkOptions(checkOpts, options, msg, log = "error") {
+  function checkOptions(checkOpts, options, msg, log2 = "error") {
     for (const key in checkOpts) {
       const opt = key;
       if (opt in options)
-        this.logger[log](`${msg}: option ${key}. ${checkOpts[opt]}`);
+        this.logger[log2](`${msg}: option ${key}. ${checkOpts[opt]}`);
     }
   }
   function getSchEnv(keyRef) {
@@ -9285,7 +9285,7 @@ const keyword_1 = keyword;
 const subschema_1 = subschema;
 const codegen_1$n = codegen;
 const names_1$3 = names$1;
-const resolve_1$2 = resolve$1;
+const resolve_1$1 = resolve$1;
 const util_1$m = util;
 const errors_1 = errors;
 function validateFunctionCode(it) {
@@ -9412,7 +9412,7 @@ function checkNoDefault(it) {
 function updateContext(it) {
   const schId = it.schema[it.opts.schemaId];
   if (schId)
-    it.baseId = (0, resolve_1$2.resolveUrl)(it.opts.uriResolver, it.baseId, schId);
+    it.baseId = (0, resolve_1$1.resolveUrl)(it.opts.uriResolver, it.baseId, schId);
 }
 function checkAsyncSchema(it) {
   if (it.schema.$async && !it.schemaEnv.$async)
@@ -9429,9 +9429,9 @@ function commentKeyword({ gen, schemaEnv, schema, errSchemaPath, opts }) {
   }
 }
 function returnResults(it) {
-  const { gen, schemaEnv, validateName, ValidationError: ValidationError3, opts } = it;
+  const { gen, schemaEnv, validateName, ValidationError: ValidationError2, opts } = it;
   if (schemaEnv.$async) {
-    gen.if((0, codegen_1$n._)`${names_1$3.default.errors} === 0`, () => gen.return(names_1$3.default.data), () => gen.throw((0, codegen_1$n._)`new ${ValidationError3}(${names_1$3.default.vErrors})`));
+    gen.if((0, codegen_1$n._)`${names_1$3.default.errors} === 0`, () => gen.return(names_1$3.default.data), () => gen.throw((0, codegen_1$n._)`new ${ValidationError2}(${names_1$3.default.vErrors})`));
   } else {
     gen.assign((0, codegen_1$n._)`${validateName}.errors`, names_1$3.default.vErrors);
     if (opts.unevaluated)
@@ -9775,31 +9775,43 @@ function getData($data, { dataLevel, dataNames, dataPathArr }) {
 }
 validate.getData = getData;
 var validation_error = {};
-Object.defineProperty(validation_error, "__esModule", { value: true });
-class ValidationError2 extends Error {
-  constructor(errors2) {
-    super("validation failed");
-    this.errors = errors2;
-    this.ajv = this.validation = true;
+var hasRequiredValidation_error;
+function requireValidation_error() {
+  if (hasRequiredValidation_error) return validation_error;
+  hasRequiredValidation_error = 1;
+  Object.defineProperty(validation_error, "__esModule", { value: true });
+  class ValidationError2 extends Error {
+    constructor(errors2) {
+      super("validation failed");
+      this.errors = errors2;
+      this.ajv = this.validation = true;
+    }
   }
+  validation_error.default = ValidationError2;
+  return validation_error;
 }
-validation_error.default = ValidationError2;
 var ref_error = {};
-Object.defineProperty(ref_error, "__esModule", { value: true });
-const resolve_1$1 = resolve$1;
-class MissingRefError2 extends Error {
-  constructor(resolver, baseId, ref2, msg) {
-    super(msg || `can't resolve reference ${ref2} from id ${baseId}`);
-    this.missingRef = (0, resolve_1$1.resolveUrl)(resolver, baseId, ref2);
-    this.missingSchema = (0, resolve_1$1.normalizeId)((0, resolve_1$1.getFullPath)(resolver, this.missingRef));
+var hasRequiredRef_error;
+function requireRef_error() {
+  if (hasRequiredRef_error) return ref_error;
+  hasRequiredRef_error = 1;
+  Object.defineProperty(ref_error, "__esModule", { value: true });
+  const resolve_12 = resolve$1;
+  class MissingRefError2 extends Error {
+    constructor(resolver, baseId, ref2, msg) {
+      super(msg || `can't resolve reference ${ref2} from id ${baseId}`);
+      this.missingRef = (0, resolve_12.resolveUrl)(resolver, baseId, ref2);
+      this.missingSchema = (0, resolve_12.normalizeId)((0, resolve_12.getFullPath)(resolver, this.missingRef));
+    }
   }
+  ref_error.default = MissingRefError2;
+  return ref_error;
 }
-ref_error.default = MissingRefError2;
 var compile = {};
 Object.defineProperty(compile, "__esModule", { value: true });
 compile.resolveSchema = compile.getCompilingSchema = compile.resolveRef = compile.compileSchema = compile.SchemaEnv = void 0;
 const codegen_1$m = codegen;
-const validation_error_1 = validation_error;
+const validation_error_1 = requireValidation_error();
 const names_1$2 = names$1;
 const resolve_1 = resolve$1;
 const util_1$l = util;
@@ -10072,8 +10084,8 @@ uri$1.default = uri;
   Object.defineProperty(exports$1, "CodeGen", { enumerable: true, get: function() {
     return codegen_12.CodeGen;
   } });
-  const validation_error_12 = validation_error;
-  const ref_error_12 = ref_error;
+  const validation_error_12 = requireValidation_error();
+  const ref_error_12 = requireRef_error();
   const rules_12 = rules;
   const compile_12 = compile;
   const codegen_2 = codegen;
@@ -10524,11 +10536,11 @@ uri$1.default = uri;
   Ajv.ValidationError = validation_error_12.default;
   Ajv.MissingRefError = ref_error_12.default;
   exports$1.default = Ajv;
-  function checkOptions(checkOpts, options, msg, log = "error") {
+  function checkOptions(checkOpts, options, msg, log2 = "error") {
     for (const key in checkOpts) {
       const opt = key;
       if (opt in options)
-        this.logger[log](`${msg}: option ${key}. ${checkOpts[opt]}`);
+        this.logger[log2](`${msg}: option ${key}. ${checkOpts[opt]}`);
     }
   }
   function getSchEnv(keyRef) {
@@ -10666,7 +10678,7 @@ id.default = def$s;
 var ref = {};
 Object.defineProperty(ref, "__esModule", { value: true });
 ref.callRef = ref.getValidate = void 0;
-const ref_error_1$1 = ref_error;
+const ref_error_1$1 = requireRef_error();
 const code_1$8 = code;
 const codegen_1$l = codegen;
 const names_1$1 = names$1;
@@ -12137,7 +12149,7 @@ Object.defineProperty(discriminator, "__esModule", { value: true });
 const codegen_1 = codegen;
 const types_1 = types;
 const compile_1 = compile;
-const ref_error_1 = ref_error;
+const ref_error_1 = requireRef_error();
 const util_1 = util;
 const error = {
   message: ({ params: { discrError, tagName } }) => discrError === types_1.DiscrError.Tag ? `tag "${tagName}" must be string` : `value of tag "${tagName}" must be in oneOf`,
@@ -12534,11 +12546,11 @@ const require$$3 = {
   Object.defineProperty(exports$1, "CodeGen", { enumerable: true, get: function() {
     return codegen_12.CodeGen;
   } });
-  var validation_error_12 = validation_error;
+  var validation_error_12 = requireValidation_error();
   Object.defineProperty(exports$1, "ValidationError", { enumerable: true, get: function() {
     return validation_error_12.default;
   } });
-  var ref_error_12 = ref_error;
+  var ref_error_12 = requireRef_error();
   Object.defineProperty(exports$1, "MissingRefError", { enumerable: true, get: function() {
     return ref_error_12.default;
   } });
@@ -13145,7 +13157,7 @@ let SemVer$d = class SemVer {
 };
 var semver$1 = SemVer$d;
 const SemVer$c = semver$1;
-const parse$6 = (version, options, throwErrors = false) => {
+const parse$7 = (version, options, throwErrors = false) => {
   if (version instanceof SemVer$c) {
     return version;
   }
@@ -13158,16 +13170,16 @@ const parse$6 = (version, options, throwErrors = false) => {
     throw er;
   }
 };
-var parse_1 = parse$6;
-const parse$5 = parse_1;
+var parse_1 = parse$7;
+const parse$6 = parse_1;
 const valid$2 = (version, options) => {
-  const v = parse$5(version, options);
+  const v = parse$6(version, options);
   return v ? v.version : null;
 };
 var valid_1 = valid$2;
-const parse$4 = parse_1;
+const parse$5 = parse_1;
 const clean$1 = (version, options) => {
-  const s = parse$4(version.trim().replace(/^[=v]+/, ""), options);
+  const s = parse$5(version.trim().replace(/^[=v]+/, ""), options);
   return s ? s.version : null;
 };
 var clean_1 = clean$1;
@@ -13188,10 +13200,10 @@ const inc$1 = (version, release, options, identifier, identifierBase) => {
   }
 };
 var inc_1 = inc$1;
-const parse$3 = parse_1;
+const parse$4 = parse_1;
 const diff$1 = (version1, version2) => {
-  const v1 = parse$3(version1, null, true);
-  const v2 = parse$3(version2, null, true);
+  const v1 = parse$4(version1, null, true);
+  const v2 = parse$4(version2, null, true);
   const comparison = v1.compare(v2);
   if (comparison === 0) {
     return null;
@@ -13234,9 +13246,9 @@ var minor_1 = minor$1;
 const SemVer$8 = semver$1;
 const patch$1 = (a, loose) => new SemVer$8(a, loose).patch;
 var patch_1 = patch$1;
-const parse$2 = parse_1;
+const parse$3 = parse_1;
 const prerelease$1 = (version, options) => {
-  const parsed = parse$2(version, options);
+  const parsed = parse$3(version, options);
   return parsed && parsed.prerelease.length ? parsed.prerelease : null;
 };
 var prerelease_1 = prerelease$1;
@@ -13324,7 +13336,7 @@ const cmp$1 = (a, op, b, loose) => {
 };
 var cmp_1 = cmp$1;
 const SemVer$5 = semver$1;
-const parse$1 = parse_1;
+const parse$2 = parse_1;
 const { safeRe: re, t } = reExports;
 const coerce$1 = (version, options) => {
   if (version instanceof SemVer$5) {
@@ -13359,7 +13371,7 @@ const coerce$1 = (version, options) => {
   const patch2 = match[4] || "0";
   const prerelease2 = options.includePrerelease && match[5] ? `-${match[5]}` : "";
   const build = options.includePrerelease && match[6] ? `+${match[6]}` : "";
-  return parse$1(`${major2}.${minor2}.${patch2}${prerelease2}${build}`, options);
+  return parse$2(`${major2}.${minor2}.${patch2}${prerelease2}${build}`, options);
 };
 var coerce_1 = coerce$1;
 class LRUCache {
@@ -14276,7 +14288,7 @@ const internalRe = reExports;
 const constants = constants$1;
 const SemVer2 = semver$1;
 const identifiers = identifiers$1;
-const parse = parse_1;
+const parse$1 = parse_1;
 const valid = valid_1;
 const clean = clean_1;
 const inc = inc_1;
@@ -14314,7 +14326,7 @@ const intersects = intersects_1;
 const simplifyRange = simplify;
 const subset = subset_1;
 var semver = {
-  parse,
+  parse: parse$1,
   valid,
   clean,
   inc,
@@ -14861,7 +14873,7 @@ var onetimeExports = onetime$1.exports;
   module.exports.default = Conf2;
 })(source, source.exports);
 var sourceExports = source.exports;
-const path = require$$0$1;
+const path$1 = require$$0$1;
 const { app, ipcMain, ipcRenderer, shell } = require$$1$2;
 const Conf = sourceExports;
 let isInitialized = false;
@@ -14903,7 +14915,7 @@ class ElectronStore extends Conf {
       options.projectVersion = appVersion;
     }
     if (options.cwd) {
-      options.cwd = path.isAbsolute(options.cwd) ? options.cwd : path.join(defaultCwd, options.cwd);
+      options.cwd = path$1.isAbsolute(options.cwd) ? options.cwd : path$1.join(defaultCwd, options.cwd);
     } else {
       options.cwd = defaultCwd;
     }
@@ -14923,6 +14935,73 @@ class ElectronStore extends Conf {
 }
 var electronStore = ElectronStore;
 const Store = /* @__PURE__ */ getDefaultExportFromCjs(electronStore);
+var main = {};
+const fs = require$$0;
+const path = require$$0$1;
+function log(message) {
+  console.log(`[dotenv][DEBUG] ${message}`);
+}
+const NEWLINE = "\n";
+const RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/;
+const RE_NEWLINES = /\\n/g;
+const NEWLINES_MATCH = /\r\n|\n|\r/;
+function parse(src, options) {
+  const debug2 = Boolean(options && options.debug);
+  const obj = {};
+  src.toString().split(NEWLINES_MATCH).forEach(function(line, idx) {
+    const keyValueArr = line.match(RE_INI_KEY_VAL);
+    if (keyValueArr != null) {
+      const key = keyValueArr[1];
+      let val = keyValueArr[2] || "";
+      const end = val.length - 1;
+      const isDoubleQuoted = val[0] === '"' && val[end] === '"';
+      const isSingleQuoted = val[0] === "'" && val[end] === "'";
+      if (isSingleQuoted || isDoubleQuoted) {
+        val = val.substring(1, end);
+        if (isDoubleQuoted) {
+          val = val.replace(RE_NEWLINES, NEWLINE);
+        }
+      } else {
+        val = val.trim();
+      }
+      obj[key] = val;
+    } else if (debug2) {
+      log(`did not match key and value when parsing line ${idx + 1}: ${line}`);
+    }
+  });
+  return obj;
+}
+function config(options) {
+  let dotenvPath = path.resolve(process.cwd(), ".env");
+  let encoding = "utf8";
+  let debug2 = false;
+  if (options) {
+    if (options.path != null) {
+      dotenvPath = options.path;
+    }
+    if (options.encoding != null) {
+      encoding = options.encoding;
+    }
+    if (options.debug != null) {
+      debug2 = true;
+    }
+  }
+  try {
+    const parsed = parse(fs.readFileSync(dotenvPath, { encoding }), { debug: debug2 });
+    Object.keys(parsed).forEach(function(key) {
+      if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
+        process.env[key] = parsed[key];
+      } else if (debug2) {
+        log(`"${key}" is already defined in \`process.env\` and will not be overwritten`);
+      }
+    });
+    return { parsed };
+  } catch (e) {
+    return { error: e };
+  }
+}
+main.config = config;
+main.parse = parse;
 const INPUT_KEYBOARD = 1;
 const KEYEVENTF_UNICODE = 4;
 const KEYEVENTF_KEYUP = 2;
@@ -15061,15 +15140,15 @@ async function fetchEnemyRuneHaste(activePlayerName, allPlayers) {
   console.log("[RiotAPI] Enemy rune haste:", result);
   return result;
 }
+main.config();
 const store = new Store({
   defaults: {
     windowX: null,
     windowY: null,
-    screenLocked: false,
-    riotApiKey: "RGAPI-da63f0c5-654a-4cd5-92a5-8bda40079ae7"
+    screenLocked: false
   }
 });
-setApiKey(store.get("riotApiKey", ""));
+setApiKey(process.env.RIOT_API_KEY || "");
 let mainWindow = null;
 let tray = null;
 let isScreenLocked = store.get("screenLocked", false);
@@ -15097,7 +15176,7 @@ function createWindow() {
     focusable: false,
     skipTaskbar: true,
     webPreferences: {
-      preload: path$6.join(__dirname, "preload.js"),
+      preload: path$7.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -15126,7 +15205,7 @@ function createWindow() {
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path$6.join(__dirname, "../dist/index.html"));
+    mainWindow.loadFile(path$7.join(__dirname, "../dist/index.html"));
   }
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -15280,7 +15359,7 @@ function registerShortcuts() {
   });
 }
 function createTray() {
-  const iconPath = path$6.join(__dirname, "../build/logo.png");
+  const iconPath = path$7.join(__dirname, "../build/logo.png");
   const icon = require$$1$2.nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   tray = new require$$1$2.Tray(icon);
   tray.setToolTip("JiJiGuGu Overlay");

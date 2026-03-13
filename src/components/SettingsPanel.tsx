@@ -18,8 +18,8 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
             <div className="settings-row">
                 <label className="settings-label">
-                    Reaction delay
-                    <span className="settings-hint">Seconds subtracted from CD to compensate reaction time</span>
+                    Reaction Delay
+                    <span className="settings-hint">Subtracted to Compensate Reaction Time</span>
                 </label>
                 <div className="settings-input-group">
                     <input
@@ -40,7 +40,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
             <div className="settings-row">
                 <label className="settings-label">
                     Debug
-                    <span className="settings-hint">Show clipboard preview text at the bottom</span>
+                    <span className="settings-hint">Show Clipboard Preview Text</span>
                 </label>
                 <button
                     className={`title-btn${debug ? ' lock-btn active' : ''}`}

@@ -20,6 +20,8 @@ export default function SpellButton({
 
     const startTimer = useTimerStore((s) => s.startTimer)
     const resetTimer = useTimerStore((s) => s.resetTimer)
+    const adjustTimer = useTimerStore((s) => s.adjustTimer)
+    const reactionDelay = useTimerStore((s) => s.reactionDelay)
 
     const now = Date.now()
     const remaining = spell.active
@@ -29,9 +31,13 @@ export default function SpellButton({
     const isActive = spell.active && remaining > 0
 
     const handleClick = useCallback(async () => {
-        await startTimer(position, slot)
-        // Clipboard is auto-managed by useAutoClipboard
-    }, [position, slot, startTimer])
+        if (isActive) {
+            // Already counting down: shorten by reaction delay
+            adjustTimer(position, slot, -reactionDelay)
+        } else {
+            await startTimer(position, slot)
+        }
+    }, [position, slot, startTimer, adjustTimer, reactionDelay, isActive])
 
     const handleContextMenu = useCallback(
         (e: React.MouseEvent) => {
