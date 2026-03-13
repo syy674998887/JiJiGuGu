@@ -30,7 +30,7 @@
   },
   "build": {
     "appId": "com.jijigugu.overlay",
-    "productName": "JiJiGuGu Overlay",
+    "productName": "JiJiGuGu",
     "directories": {
       "output": "release"
     },

@@ -22,6 +22,8 @@ const store = new Store({
         windowX: null as number | null,
         windowY: null as number | null,
         screenLocked: false,
+        reactionDelay: 0,
+        debug: false,
     },
 })
 
@@ -126,17 +128,8 @@ ipcMain.handle('get-active-player', async () => {
     return fetchLeagueAPI('/liveclientdata/activeplayername')
 })
 
-ipcMain.handle('get-all-game-data', async () => {
-    return fetchLeagueAPI('/liveclientdata/allgamedata')
-})
-
 ipcMain.handle('get-enemy-rune-haste', async (_event, activePlayerName: string, allPlayers: unknown[]) => {
     return fetchEnemyRuneHaste(activePlayerName, allPlayers as Parameters<typeof fetchEnemyRuneHaste>[1])
-})
-
-ipcMain.on('save-position', (_event, pos: { x: number; y: number }) => {
-    store.set('windowX', pos.x)
-    store.set('windowY', pos.y)
 })
 
 ipcMain.on('toggle-screen-lock', () => {
@@ -156,6 +149,19 @@ ipcMain.handle('get-screen-lock', () => {
     return isScreenLocked
 })
 
+ipcMain.handle('get-settings', () => {
+    return {
+        reactionDelay: store.get('reactionDelay', 0) as number,
+        debug: store.get('debug', false) as boolean,
+    }
+})
+
+ipcMain.on('save-setting', (_event, key: string, value: unknown) => {
+    if (key === 'reactionDelay' || key === 'debug') {
+        store.set(key, value)
+    }
+})
+
 ipcMain.on('set-window-size', (_event, width: number, height: number) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setResizable(true)
@@ -173,10 +179,6 @@ ipcMain.on('set-ignore-mouse', (_event, ignore: boolean) => {
             mainWindow.setIgnoreMouseEvents(false)
         }
     }
-})
-
-ipcMain.on('close-window', () => {
-    app.quit()
 })
 
 ipcMain.on('minimize-window', () => {
@@ -301,7 +303,7 @@ function createTray() {
     const iconPath = path.join(__dirname, '../build/logo.png')
     const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
     tray = new Tray(icon)
-    tray.setToolTip('JiJiGuGu Overlay')
+    tray.setToolTip('JiJiGuGu')
 
     const contextMenu = Menu.buildFromTemplate([
         {

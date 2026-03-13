@@ -3,11 +3,15 @@ import TitleBar from './components/TitleBar'
 import TimerPanel from './components/TimerPanel'
 import CopyAllButton from './components/CopyAllButton'
 import SettingsPanel from './components/SettingsPanel'
+import { useTimerStore } from './store/timerStore'
 import { useGameDetect } from './hooks/useGameDetect'
 import { useAutoClipboard } from './hooks/useAutoClipboard'
 import { useScreenLock } from './hooks/useScreenLock'
 
 function App() {
+    const loadSettings = useTimerStore((s) => s.loadSettings)
+    useEffect(() => { loadSettings() }, [loadSettings])
+
     const { isInGame } = useGameDetect()
     useAutoClipboard()
     const [isLocked] = useScreenLock()

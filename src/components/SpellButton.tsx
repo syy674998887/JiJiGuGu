@@ -3,7 +3,7 @@ import type { Position, SpellSlot, SpellTimer } from '../types'
 import { useTimerStore } from '../store/timerStore'
 import { useTickingTimer } from '../hooks/useTickingTimer'
 import { SPELL_ICON_KEYS, getSpellIconUrl } from '../utils/icons'
-import { formatTime } from '../utils/spells'
+import { formatTime } from '../utils/format'
 
 interface SpellButtonProps {
     position: Position

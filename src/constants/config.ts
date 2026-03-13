@@ -32,3 +32,8 @@ export const ITEM_HASTE: Record<number, number> = {
 /** Ordered positions for display */
 export const POSITIONS: Position[] = ['TOP', 'JG', 'MID', 'ADC', 'SUP']
 
+/** Display labels for each position */
+export const POSITION_LABELS: Record<Position, string> = {
+    TOP: 'Top', JG: 'Jng', MID: 'Mid', ADC: 'Bot', SUP: 'Sup',
+}
+

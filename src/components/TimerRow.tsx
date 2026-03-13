@@ -1,9 +1,6 @@
 import type { Position, EnemyState } from '../types'
+import { POSITION_LABELS } from '../constants/config'
 import SpellButton from './SpellButton'
-
-const DISPLAY_NAME: Record<Position, string> = {
-    TOP: 'Top', JG: 'Jng', MID: 'Mid', ADC: 'Bot', SUP: 'Sup',
-}
 
 interface TimerRowProps {
     position: Position
@@ -24,7 +21,7 @@ export default function TimerRow({ position, enemy }: TimerRowProps) {
                 </div>
             )}
 
-            <span className="timer-row-label">{DISPLAY_NAME[position]}</span>
+            <span className="timer-row-label">{POSITION_LABELS[position]}</span>
 
             <div className="timer-row-spells">
                 <SpellButton position={position} slot="spell1" spell={enemy.spell1} />

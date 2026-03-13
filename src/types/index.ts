@@ -53,6 +53,7 @@ export interface TimerStore {
     clearAllTimers: () => void
     setReactionDelay: (seconds: number) => void
     setDebug: (on: boolean) => void
+    loadSettings: () => Promise<void>
 }
 
 /** Parsed enemy from League API */
@@ -84,18 +85,3 @@ export interface GameStats {
     gameMode: string
 }
 
-/** League Live Client API — activeplayername response */
-export type ActivePlayerName = string
-
-/** League Live Client API — allgamedata response */
-export interface AllGameData {
-    activePlayer: {
-        summonerName: string
-        riotId: string
-    }
-    allPlayers: PlayerData[]
-    gameData: {
-        gameTime: number
-        gameMode: string
-    }
-}

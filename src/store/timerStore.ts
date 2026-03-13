@@ -7,8 +7,9 @@ import type {
     ParsedEnemy,
     SpellName,
 } from '../types'
-import { POSITIONS, SPELL_COOLDOWNS, REACTION_COMPENSATION, DDRAGON_VERSION } from '../constants/config'
+import { POSITIONS, SPELL_COOLDOWNS, REACTION_COMPENSATION } from '../constants/config'
 import { calcCooldown } from '../utils/spells'
+import { getChampionIconUrl } from '../utils/icons'
 
 function createDefaultSpellTimer(spellName: SpellName = 'Flash'): SpellTimer {
     return {
@@ -199,9 +200,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
                 newEnemies[pos] = {
                     championName: parsed.championName,
-                    championIconUrl: parsed.championName
-                        ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${parsed.championName}.png`
-                        : '',
+                    championIconUrl: getChampionIconUrl(parsed.championName),
                     haste: parsed.haste,
                     spell1: spell1Timer,
                     spell2: spell2Timer,
@@ -232,9 +231,20 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
 
     setReactionDelay: (seconds: number) => {
         set({ reactionDelay: seconds })
+        window.electronAPI.saveSetting('reactionDelay', seconds)
     },
 
     setDebug: (on: boolean) => {
         set({ debug: on })
+        window.electronAPI.saveSetting('debug', on)
+    },
+
+    loadSettings: async () => {
+        try {
+            const s = await window.electronAPI.getSettings()
+            set({ reactionDelay: s.reactionDelay, debug: s.debug })
+        } catch {
+            // use defaults
+        }
     },
 }))

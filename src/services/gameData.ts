@@ -25,24 +25,6 @@ export function cleanSpellName(displayName: string, rawDisplayName?: string): Sp
     if (raw.includes('smite') || raw.includes('惩戒') || raw.includes('重击')) return 'Smite'
     if (raw.includes('clarity') || raw.includes('mana') || raw.includes('清晰')) return 'Clarity'
 
-    // Last resort: try to extract "SummonerXxx" from rawDisplayName
-    if (rawDisplayName) {
-        const match = rawDisplayName.match(/Summoner(\w+)/i)
-        if (match) {
-            const key = match[1].toLowerCase()
-            if (key.includes('flash')) return 'Flash'
-            if (key.includes('teleport')) return 'Teleport'
-            if (key === 'dot') return 'Ignite'
-            if (key.includes('heal')) return 'Heal'
-            if (key.includes('exhaust')) return 'Exhaust'
-            if (key.includes('barrier')) return 'Barrier'
-            if (key === 'boost') return 'Cleanse'
-            if (key === 'haste') return 'Ghost'
-            if (key.includes('smite')) return 'Smite'
-            if (key === 'mana') return 'Clarity'
-        }
-    }
-
     return 'Flash' // Default fallback
 }
 
@@ -89,14 +71,8 @@ function parseSpellsFromEnemy(enemy: PlayerData): { spell1: SpellName; spell2: S
     }
 }
 
-/** Check if enemy has Smite */
-function hasSmite(enemy: PlayerData): boolean {
-    const { spell1, spell2 } = parseSpellsFromEnemy(enemy)
-    return spell1 === 'Smite' || spell2 === 'Smite'
-}
-
 /**
- * Parse enemy team from allgamedata response.
+ * Parse enemy team from playerlist response.
  * Returns 5 parsed enemies with position assignment.
  * runeHasteMap: riotId → extra haste from runes (e.g. Cosmic Insight +18)
  */
@@ -111,7 +87,6 @@ export function parseEnemies(
             p.summonerName === activePlayerName ||
             p.riotId === activePlayerName,
     )
-    // Fallback: default to ORDER if player not found (same as league-spell-tracker)
     const myTeam = activePlayer?.team ?? 'ORDER'
 
     const enemies = playerList.filter((p) => p.team !== myTeam)
@@ -131,8 +106,8 @@ export function parseEnemies(
     }
 
     for (const enemy of enemies) {
-        if (!jgAssigned && hasSmite(enemy)) {
-            const { spell1, spell2 } = parseSpellsFromEnemy(enemy)
+        const { spell1, spell2 } = parseSpellsFromEnemy(enemy)
+        if (!jgAssigned && (spell1 === 'Smite' || spell2 === 'Smite')) {
             result.push({
                 position: 'JG',
                 championName: getEnglishChampionName(enemy),

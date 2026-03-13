@@ -6,16 +6,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPlayerList: () => ipcRenderer.invoke('get-player-list'),
     getGameStats: () => ipcRenderer.invoke('get-game-stats'),
     getActivePlayer: () => ipcRenderer.invoke('get-active-player'),
-    getAllGameData: () => ipcRenderer.invoke('get-all-game-data'),
 
-    savePosition: (pos: { x: number; y: number }) =>
-        ipcRenderer.send('save-position', pos),
-
-    closeApp: () => ipcRenderer.send('close-window'),
     minimizeApp: () => ipcRenderer.send('minimize-window'),
 
     toggleScreenLock: () => ipcRenderer.send('toggle-screen-lock'),
     getScreenLock: () => ipcRenderer.invoke('get-screen-lock'),
+
+    getSettings: () => ipcRenderer.invoke('get-settings'),
+    saveSetting: (key: string, value: unknown) =>
+        ipcRenderer.send('save-setting', key, value),
     onScreenLockChanged: (callback: (locked: boolean) => void) => {
         const handler = (_event: Electron.IpcRendererEvent, locked: boolean) =>
             callback(locked)
