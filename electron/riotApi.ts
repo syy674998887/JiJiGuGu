@@ -11,9 +11,21 @@ const ACCOUNT_REGION = 'americas.api.riotgames.com'
 const PLATFORM = 'na1.api.riotgames.com'
 
 let apiKey = ''
+let validationSeq = 0
+
+function maskApiKey(key: string): string {
+    const trimmed = key.trim()
+    if (!trimmed) return '(empty)'
+    if (trimmed.length <= 16) return `${trimmed.slice(0, 6)}...`
+    return `${trimmed.slice(0, 10)}...${trimmed.slice(-4)}`
+}
 
 export function setApiKey(key: string) {
     apiKey = key.trim()
+    console.log('[RiotAPI][main] setApiKey', {
+        key: maskApiKey(apiKey),
+        length: apiKey.length,
+    })
 }
 
 export function getApiKey(): string {
@@ -24,24 +36,60 @@ export function getApiKey(): string {
  * Validate the current API key by hitting a lightweight endpoint.
  * Returns 'valid' | 'invalid' | 'empty'.
  */
-export function validateApiKey(): Promise<'valid' | 'invalid' | 'empty'> {
+export function validateApiKey(context: string = 'unknown'): Promise<'valid' | 'invalid' | 'empty'> {
     return new Promise((resolve) => {
-        if (!apiKey) { resolve('empty'); return }
+        const requestId = ++validationSeq
+        const keySnapshot = apiKey
+        const maskedKey = maskApiKey(keySnapshot)
+
+        console.log(`[RiotAPI][main] validateApiKey #${requestId} start`, {
+            context,
+            key: maskedKey,
+            length: keySnapshot.length,
+            endpoint: `https://${PLATFORM}/lol/status/v4/platform-data`,
+        })
+
+        if (!keySnapshot) {
+            console.log(`[RiotAPI][main] validateApiKey #${requestId} short-circuit empty key`, {
+                context,
+            })
+            resolve('empty')
+            return
+        }
         const req = https.get(`https://${PLATFORM}/lol/status/v4/platform-data`, {
-            headers: { 'X-Riot-Token': apiKey },
+            headers: { 'X-Riot-Token': keySnapshot },
             timeout: 5000,
         }, (res) => {
-            // Drain data to avoid memory leak
-            res.resume()
-            if (res.statusCode === 200) {
-                resolve('valid')
-            } else {
-                // 401 = bad key, 403 = expired/forbidden
-                resolve('invalid')
-            }
+            let body = ''
+            res.on('data', (chunk: string) => (body += chunk))
+            res.on('end', () => {
+                const status = res.statusCode === 200 ? 'valid' : 'invalid'
+                console.log(`[RiotAPI][main] validateApiKey #${requestId} response`, {
+                    context,
+                    key: maskedKey,
+                    statusCode: res.statusCode ?? null,
+                    result: status,
+                    body: body.slice(0, 500),
+                })
+                resolve(status)
+            })
         })
-        req.on('error', () => resolve('invalid'))
-        req.on('timeout', () => { req.destroy(); resolve('invalid') })
+        req.on('error', (error) => {
+            console.log(`[RiotAPI][main] validateApiKey #${requestId} error`, {
+                context,
+                key: maskedKey,
+                error: error.message,
+            })
+            resolve('invalid')
+        })
+        req.on('timeout', () => {
+            console.log(`[RiotAPI][main] validateApiKey #${requestId} timeout`, {
+                context,
+                key: maskedKey,
+            })
+            req.destroy()
+            resolve('invalid')
+        })
     })
 }
 

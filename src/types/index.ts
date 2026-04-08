@@ -59,6 +59,7 @@ export interface TimerStore {
     setShowFlashOnly: (on: boolean) => void
     setApiKeyStatus: (status: import('./electron').ApiKeyStatus) => void
     setRiotApiKey: (key: string) => Promise<void>
+    validateCurrentRiotApiKey: (reason?: string) => Promise<void>
     loadSettings: () => Promise<void>
 }
 
@@ -90,4 +91,3 @@ export interface GameStats {
     gameTime: number
     gameMode: string
 }
-

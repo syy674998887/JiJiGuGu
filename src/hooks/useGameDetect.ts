@@ -14,6 +14,7 @@ export function useGameDetect() {
     const updateEnemies = useTimerStore((s) => s.updateEnemies)
     const clearAllTimers = useTimerStore((s) => s.clearAllTimers)
     const isInGame = useTimerStore((s) => s.isInGame)
+    const validateCurrentRiotApiKey = useTimerStore((s) => s.validateCurrentRiotApiKey)
 
     const failCountRef = useRef(0)
     const prevEnemiesRef = useRef<string>('')
@@ -23,8 +24,6 @@ export function useGameDetect() {
     const runeHasteRef = useRef<Record<string, number>>({})
     const runeHasteFetchedRef = useRef(false)
 
-    const setApiKeyStatus = useTimerStore((s) => s.setApiKeyStatus)
-
     // Notify main process when in-game state changes (for Ctrl+V override)
     useEffect(() => {
         if (isInGame !== prevInGameRef.current) {
@@ -32,16 +31,14 @@ export function useGameDetect() {
             window.electronAPI.setInGame(isInGame)
             if (isInGame) {
                 // Validate API key when entering a game
-                window.electronAPI.validateRiotApiKey().then((status) => {
-                    setApiKeyStatus(status)
-                })
+                void validateCurrentRiotApiKey('enter-game')
             } else {
                 // Reset rune haste when leaving game
                 runeHasteRef.current = {}
                 runeHasteFetchedRef.current = false
             }
         }
-    }, [isInGame, setApiKeyStatus])
+    }, [isInGame, validateCurrentRiotApiKey])
 
     useEffect(() => {
         let active = true

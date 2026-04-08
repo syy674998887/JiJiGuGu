@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTimerStore } from '../store/timerStore'
 
 interface SettingsPanelProps {
@@ -28,14 +28,26 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
     const setShowFlashOnly = useTimerStore((s) => s.setShowFlashOnly)
     const riotApiKey = useTimerStore((s) => s.riotApiKey)
     const setRiotApiKey = useTimerStore((s) => s.setRiotApiKey)
+    const validateCurrentRiotApiKey = useTimerStore((s) => s.validateCurrentRiotApiKey)
     const apiKeyStatus = useTimerStore((s) => s.apiKeyStatus)
 
     const [localKey, setLocalKey] = useState(riotApiKey)
 
+    useEffect(() => {
+        setLocalKey(riotApiKey)
+    }, [riotApiKey])
+
     const saveKey = () => {
-        if (localKey !== riotApiKey) {
-            setRiotApiKey(localKey)
+        const trimmedLocalKey = localKey.trim()
+
+        if (trimmedLocalKey !== riotApiKey) {
+            console.log('[RiotAPI][renderer] Settings saveKey detected key change')
+            void setRiotApiKey(trimmedLocalKey)
+            return
         }
+
+        console.log('[RiotAPI][renderer] Settings saveKey re-validating current key')
+        void validateCurrentRiotApiKey('settings-save')
     }
 
     return (
@@ -50,7 +62,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 <label className="settings-label">
                     Riot API Key
                     <span className="settings-hint">
-                        From <a href="https://developer.riotgames.com" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }}>developer.riotgames.com</a>
+                        <a href="https://developer.riotgames.com" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }}>developer.riotgames.com</a>
                     </span>
                 </label>
                 <span className={`api-status-label ${STATUS_CLASS[apiKeyStatus]}`}>

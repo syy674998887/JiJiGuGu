@@ -37,6 +37,13 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isScreenLocked = store.get('screenLocked', false) as boolean
 
+function maskApiKey(key: string): string {
+    const trimmed = key.trim()
+    if (!trimmed) return '(empty)'
+    if (trimmed.length <= 16) return `${trimmed.slice(0, 6)}...`
+    return `${trimmed.slice(0, 10)}...${trimmed.slice(-4)}`
+}
+
 // Prevent multiple instances
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -169,13 +176,22 @@ ipcMain.on('save-setting', (_event, key: string, value: unknown) => {
 
 ipcMain.handle('set-riot-api-key', async (_event, key: string) => {
     const trimmed = key.trim()
+    console.log('[RiotAPI][main] IPC set-riot-api-key', {
+        key: maskApiKey(trimmed),
+        length: trimmed.length,
+    })
     store.set('riotApiKey', trimmed)
     setApiKey(trimmed)
-    return validateApiKey()
+    return validateApiKey('ipc:set-riot-api-key')
 })
 
 ipcMain.handle('validate-riot-api-key', async () => {
-    return validateApiKey()
+    const currentKey = getApiKey()
+    console.log('[RiotAPI][main] IPC validate-riot-api-key', {
+        key: maskApiKey(currentKey),
+        length: currentKey.length,
+    })
+    return validateApiKey('ipc:validate-riot-api-key')
 })
 
 ipcMain.on('set-window-size', (_event, width: number, height: number) => {
@@ -360,12 +376,6 @@ app.whenReady().then(async () => {
     createWindow()
     createTray()
     registerShortcuts()
-
-    // Validate API key on startup and notify renderer
-    const status = await validateApiKey()
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('api-key-status', status)
-    }
 })
 
 app.on('will-quit', () => {

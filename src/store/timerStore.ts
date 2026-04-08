@@ -11,6 +11,19 @@ import { POSITIONS, SPELL_COOLDOWNS, REACTION_COMPENSATION } from '../constants/
 import { calcCooldown } from '../utils/spells'
 import { getChampionIconUrl } from '../utils/icons'
 
+let apiKeyValidationSeq = 0
+
+function normalizeApiKey(key: string): string {
+    return key.trim()
+}
+
+function maskApiKey(key: string): string {
+    const trimmed = normalizeApiKey(key)
+    if (!trimmed) return '(empty)'
+    if (trimmed.length <= 16) return `${trimmed.slice(0, 6)}...`
+    return `${trimmed.slice(0, 10)}...${trimmed.slice(-4)}`
+}
+
 function createDefaultSpellTimer(spellName: SpellName = 'Flash'): SpellTimer {
     return {
         active: false,
@@ -252,11 +265,92 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     },
 
     setRiotApiKey: async (key: string) => {
-        set({ apiKeyStatus: 'checking', riotApiKey: key })
+        const trimmedKey = normalizeApiKey(key)
+        const requestId = ++apiKeyValidationSeq
+        console.log(`[RiotAPI][renderer] setRiotApiKey #${requestId} start`, {
+            key: maskApiKey(trimmedKey),
+            length: trimmedKey.length,
+        })
+
+        set({ apiKeyStatus: 'checking', riotApiKey: trimmedKey })
         try {
-            const status = await window.electronAPI.setRiotApiKey(key)
+            const status = await window.electronAPI.setRiotApiKey(trimmedKey)
+            const currentKey = normalizeApiKey(get().riotApiKey)
+            if (requestId !== apiKeyValidationSeq || currentKey !== trimmedKey) {
+                console.log(`[RiotAPI][renderer] setRiotApiKey #${requestId} ignored stale result`, {
+                    currentKey: maskApiKey(currentKey),
+                    validatedKey: maskApiKey(trimmedKey),
+                    status,
+                })
+                return
+            }
+            console.log(`[RiotAPI][renderer] setRiotApiKey #${requestId} done`, {
+                key: maskApiKey(trimmedKey),
+                status,
+            })
             set({ apiKeyStatus: status })
-        } catch {
+        } catch (error) {
+            const currentKey = normalizeApiKey(get().riotApiKey)
+            if (requestId !== apiKeyValidationSeq || currentKey !== trimmedKey) {
+                console.log(`[RiotAPI][renderer] setRiotApiKey #${requestId} ignored stale error`, {
+                    currentKey: maskApiKey(currentKey),
+                    validatedKey: maskApiKey(trimmedKey),
+                })
+                return
+            }
+            console.log(`[RiotAPI][renderer] setRiotApiKey #${requestId} failed`, {
+                key: maskApiKey(trimmedKey),
+                error: error instanceof Error ? error.message : String(error),
+            })
+            set({ apiKeyStatus: 'invalid' })
+        }
+    },
+
+    validateCurrentRiotApiKey: async (reason = 'manual') => {
+        const keySnapshot = normalizeApiKey(get().riotApiKey)
+        const requestId = ++apiKeyValidationSeq
+        console.log(`[RiotAPI][renderer] validateCurrentRiotApiKey #${requestId} start`, {
+            reason,
+            key: maskApiKey(keySnapshot),
+            length: keySnapshot.length,
+        })
+
+        set({
+            riotApiKey: keySnapshot,
+            apiKeyStatus: keySnapshot ? 'checking' : 'empty',
+        })
+
+        try {
+            const status = await window.electronAPI.validateRiotApiKey()
+            const currentKey = normalizeApiKey(get().riotApiKey)
+            if (requestId !== apiKeyValidationSeq || currentKey !== keySnapshot) {
+                console.log(`[RiotAPI][renderer] validateCurrentRiotApiKey #${requestId} ignored stale result`, {
+                    currentKey: maskApiKey(currentKey),
+                    validatedKey: maskApiKey(keySnapshot),
+                    status,
+                })
+                return
+            }
+            console.log(`[RiotAPI][renderer] validateCurrentRiotApiKey #${requestId} done`, {
+                reason,
+                key: maskApiKey(keySnapshot),
+                status,
+            })
+            set({ apiKeyStatus: status })
+        } catch (error) {
+            const currentKey = normalizeApiKey(get().riotApiKey)
+            if (requestId !== apiKeyValidationSeq || currentKey !== keySnapshot) {
+                console.log(`[RiotAPI][renderer] validateCurrentRiotApiKey #${requestId} ignored stale error`, {
+                    currentKey: maskApiKey(currentKey),
+                    validatedKey: maskApiKey(keySnapshot),
+                })
+                return
+            }
+            console.log(`[RiotAPI][renderer] validateCurrentRiotApiKey #${requestId} failed`, {
+                reason,
+                key: maskApiKey(keySnapshot),
+                error: error instanceof Error ? error.message : String(error),
+            })
             set({ apiKeyStatus: 'invalid' })
         }
     },
@@ -264,27 +358,18 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     loadSettings: async () => {
         try {
             const s = await window.electronAPI.getSettings()
+            const normalizedKey = normalizeApiKey(s.riotApiKey ?? '')
             set({
                 reactionDelay: s.reactionDelay,
                 debug: s.debug,
                 showFlashOnly: s.showFlashOnly ?? true,
-                riotApiKey: s.riotApiKey ?? '',
+                riotApiKey: normalizedKey,
             })
         } catch {
             // use defaults
         }
 
-        // Listen for future status pushes from main process
-        window.electronAPI.onApiKeyStatus((status) => {
-            set({ apiKeyStatus: status as import('../types/electron').ApiKeyStatus })
-        })
-
         // Actively validate on startup (don't rely on main process push timing)
-        try {
-            const status = await window.electronAPI.validateRiotApiKey()
-            set({ apiKeyStatus: status })
-        } catch {
-            set({ apiKeyStatus: 'invalid' })
-        }
+        await get().validateCurrentRiotApiKey('load-settings')
     },
 }))
