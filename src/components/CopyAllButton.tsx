@@ -1,13 +1,12 @@
 import { useTimerStore } from '../store/timerStore'
 import { useTickingTimer } from '../hooks/useTickingTimer'
-import { formatAllTimers } from '../utils/format'
+import { formatClipboardTimers } from '../utils/format'
 
 export default function CopyAllButton() {
     useTickingTimer()
     const enemies = useTimerStore((s) => s.enemies)
     const debug = useTimerStore((s) => s.debug)
-    const showFlashOnly = useTimerStore((s) => s.showFlashOnly)
-    const previewText = formatAllTimers(enemies, showFlashOnly)
+    const previewText = formatClipboardTimers(enemies)
 
     if (!debug || !previewText) return null
 

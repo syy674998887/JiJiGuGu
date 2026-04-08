@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTimerStore } from '../store/timerStore'
 import { useTickingTimer } from './useTickingTimer'
-import { formatAllTimers } from '../utils/format'
+import { formatClipboardTimers } from '../utils/format'
 
 /**
  * Automatically sync all active timers to the Windows clipboard.
@@ -14,11 +14,10 @@ export function useAutoClipboard() {
     useTickingTimer() // re-run every second
 
     const enemies = useTimerStore((s) => s.enemies)
-    const showFlashOnly = useTimerStore((s) => s.showFlashOnly)
     const prevTextRef = useRef('')
 
     useEffect(() => {
-        const text = formatAllTimers(enemies, showFlashOnly)
+        const text = formatClipboardTimers(enemies)
 
         if (text !== prevTextRef.current) {
             prevTextRef.current = text
@@ -26,4 +25,3 @@ export function useAutoClipboard() {
         }
     })
 }
-

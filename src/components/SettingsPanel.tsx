@@ -109,7 +109,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
             <div className="settings-row">
                 <label className="settings-label">
                     Flash Only
-                    <span className="settings-hint">Show Only Flash Timer (D or F)</span>
+                    <span className="settings-hint">Only Show Flash Timers</span>
                 </label>
                 <button
                     className={`title-btn${showFlashOnly ? ' lock-btn active' : ''}`}
