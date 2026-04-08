@@ -48,8 +48,8 @@
 
 ### 设置面板
 - **Reaction Delay** — 反应延迟补偿（0-10 秒），从 CD 中减去
-- **Flash Only** — 仅显示闪现计时器（D 或 F 键），简化界面
-- **Riot API Key** — 在设置中输入 API Key，实时验证状态
+- **Flash Only** — 仅影响覆盖层显示，简化界面；剪贴板始终只同步闪现计时
+- **Riot API Key** — 在设置中输入 API Key，失去焦点或按 Enter 时验证状态
 - **Debug** — 显示当前剪贴板预览文本
 
 ### 其他特性
@@ -126,6 +126,7 @@ JiJiGuGu/
 │   ├── App.tsx                      # 根组件
 │   ├── components/                  # UI 组件
 │   │   ├── TitleBar.tsx             # 标题栏（Logo、锁定、设置、最小化）
+│   │   ├── ClipboardSync.tsx        # 剪贴板同步副作用组件（不渲染 UI）
 │   │   ├── TimerPanel.tsx           # 计时面板（5 行 TimerRow）
 │   │   ├── TimerRow.tsx             # 单行：英雄头像 + 位置 + 技能按钮
 │   │   ├── SpellButton.tsx          # 技能按钮（点击计时、右键重置、倒计时）
@@ -140,7 +141,7 @@ JiJiGuGu/
 │   ├── store/timerStore.ts          # Zustand 状态管理
 │   ├── utils/                       # 工具函数
 │   │   ├── spells.ts                # 冷却计算
-│   │   ├── format.ts                # 剪贴板格式化
+│   │   ├── format.ts                # 计时文本与剪贴板格式化
 │   │   └── icons.ts                 # DDragon CDN 图标 URL
 │   ├── constants/config.ts          # 配置常量（CD 表、装备急速、API 间隔）
 │   ├── types/                       # TypeScript 类型

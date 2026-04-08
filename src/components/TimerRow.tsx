@@ -1,14 +1,14 @@
-import type { Position, EnemyState } from '../types'
+import type { Position } from '../types'
 import { POSITION_LABELS } from '../constants/config'
 import { useTimerStore } from '../store/timerStore'
 import SpellButton from './SpellButton'
 
 interface TimerRowProps {
     position: Position
-    enemy: EnemyState
 }
 
-export default function TimerRow({ position, enemy }: TimerRowProps) {
+export default function TimerRow({ position }: TimerRowProps) {
+    const enemy = useTimerStore((s) => s.enemies[position])
     const showFlashOnly = useTimerStore((s) => s.showFlashOnly)
 
     // Determine which spells to display
@@ -52,4 +52,3 @@ export default function TimerRow({ position, enemy }: TimerRowProps) {
         </div>
     )
 }
-

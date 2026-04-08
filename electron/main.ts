@@ -258,46 +258,44 @@ function fetchLeagueAPI(endpoint: string): Promise<unknown> {
 
 // ---------- In-game features (Ctrl+V override + Tab hold overlay) ----------
 
-let tabPollTimer: NodeJS.Timeout | null = null
-let ctrlVPollTimer: NodeJS.Timeout | null = null
+let inputPollTimer: NodeJS.Timeout | null = null
 let tabWasDown = false
 let vWasDown = false
 let isInGame = false
 
 const VK_CONTROL = 0x11
 const VK_V = 0x56
+const INPUT_POLL_INTERVAL = 50
 
 function enableInGameFeatures() {
     if (isInGame) return
     isInGame = true
 
-    // Ctrl+V: poll for keypress, type via SendInput (polling bypasses game privilege restrictions)
+    // Ctrl+V + Tab hold: use a single polling timer to reduce main-process wakeups.
     vWasDown = false
-    ctrlVPollTimer = setInterval(() => {
+    tabWasDown = false
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setOpacity(0)
+    }
+
+    inputPollTimer = setInterval(() => {
         const vDown = isKeyDown(VK_V)
         if (isKeyDown(VK_CONTROL) && vDown && !vWasDown) {
             const text = clipboard.readText()
             if (text) sendInputText(text)
         }
         vWasDown = vDown
-    }, 50)
 
-    // Tab hold: show overlay while held, hide on release
-    // Use opacity instead of hide/show to avoid Windows DWM flicker
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setOpacity(0)
-    }
-    tabWasDown = false
-    tabPollTimer = setInterval(() => {
-        if (!mainWindow || mainWindow.isDestroyed()) return
-        const tabDown = isTabDown()
-        if (tabDown && !tabWasDown) {
-            mainWindow.setOpacity(1)
-        } else if (!tabDown && tabWasDown) {
-            mainWindow.setOpacity(0)
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            const tabDown = isTabDown()
+            if (tabDown && !tabWasDown) {
+                mainWindow.setOpacity(1)
+            } else if (!tabDown && tabWasDown) {
+                mainWindow.setOpacity(0)
+            }
+            tabWasDown = tabDown
         }
-        tabWasDown = tabDown
-    }, 50)
+    }, INPUT_POLL_INTERVAL)
 
     console.log('[InGame] Features enabled')
 }
@@ -306,18 +304,12 @@ function disableInGameFeatures() {
     if (!isInGame) return
     isInGame = false
 
-    // Stop Ctrl+V polling
-    if (ctrlVPollTimer) {
-        clearInterval(ctrlVPollTimer)
-        ctrlVPollTimer = null
-    }
-
-    // Stop Tab polling, show overlay normally
-    if (tabPollTimer) {
-        clearInterval(tabPollTimer)
-        tabPollTimer = null
+    if (inputPollTimer) {
+        clearInterval(inputPollTimer)
+        inputPollTimer = null
     }
     tabWasDown = false
+    vWasDown = false
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setOpacity(1)
     }

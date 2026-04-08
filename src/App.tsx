@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import TitleBar from './components/TitleBar'
 import TimerPanel from './components/TimerPanel'
 import CopyAllButton from './components/CopyAllButton'
+import ClipboardSync from './components/ClipboardSync'
 import SettingsPanel from './components/SettingsPanel'
 import { useTimerStore } from './store/timerStore'
 import { useGameDetect } from './hooks/useGameDetect'
-import { useAutoClipboard } from './hooks/useAutoClipboard'
 import { useScreenLock } from './hooks/useScreenLock'
 
 function App() {
@@ -13,7 +13,6 @@ function App() {
     useEffect(() => { loadSettings() }, [loadSettings])
 
     const { isInGame } = useGameDetect()
-    useAutoClipboard()
     const [isLocked] = useScreenLock()
     const appRef = useRef<HTMLDivElement>(null)
     const [showSettings, setShowSettings] = useState(false)
@@ -73,6 +72,7 @@ function App() {
 
     return (
         <div className={`app ${isLocked ? 'locked' : ''}`} ref={appRef}>
+            <ClipboardSync />
             <TitleBar onSettingsToggle={toggleSettings} settingsOpen={showSettings} />
 
             <div className="app-content">
